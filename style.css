@@ -433,45 +433,14 @@ body.menu-open {
 
 /* Footnotes */
 .pair-footnote {
-  margin-top: var(--spacing-sm);
-  padding-top: var(--spacing-sm);
   border-top: 1px dashed var(--color-border);
 }
 
-.footnote-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: #fff8e1;
-  border: 1px solid #ffc107;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: var(--fs-xs);
-  color: var(--color-text);
-  transition: all 0.2s ease;
-}
-
-.footnote-toggle:hover {
-  background-color: #ffe082;
-}
-
-.footnote-toggle[aria-expanded="true"] {
-  background-color: #ffc107;
-}
-
-.footnote-label {
-  font-weight: 500;
-}
-
 .footnote-content {
-  margin-top: var(--spacing-sm);
   padding: var(--spacing-sm);
-  background-color: #fffde7;
-  border-left: 3px solid #ffc107;
-  border-radius: 0 4px 4px 0;
   font-size: var(--fs-sm);
   line-height: var(--lh-relaxed);
+  opacity: 0.7;
 }
 
 .pair-footnote-original .footnote-content {

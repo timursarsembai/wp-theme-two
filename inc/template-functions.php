@@ -49,11 +49,7 @@ function the_translation_pairs( $post_id = null ) {
 						</div>
 						<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
 							<div class="pair-footnote pair-footnote-original">
-								<button type="button" class="footnote-toggle" aria-expanded="false">
-									<span class="footnote-icon">📝</span>
-									<span class="footnote-label"><?php echo esc_html( $footnote_label ); ?></span>
-								</button>
-								<div class="footnote-content" style="display: none;">
+								<div class="footnote-content">
 									<?php echo wp_kses_post( $pair['footnote_original'] ); ?>
 								</div>
 							</div>
@@ -65,11 +61,7 @@ function the_translation_pairs( $post_id = null ) {
 						</div>
 						<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
 							<div class="pair-footnote pair-footnote-translation">
-								<button type="button" class="footnote-toggle" aria-expanded="false">
-									<span class="footnote-icon">📝</span>
-									<span class="footnote-label"><?php echo esc_html( $footnote_label ); ?></span>
-								</button>
-								<div class="footnote-content" style="display: none;">
+								<div class="footnote-content">
 									<?php echo wp_kses_post( $pair['footnote_translation'] ); ?>
 								</div>
 							</div>
@@ -135,18 +127,7 @@ function the_translation_pairs( $post_id = null ) {
 		</script>
 		<?php endif; ?>
 		
-		<script>
-		// Footnote toggle functionality
-		document.querySelectorAll('.footnote-toggle').forEach(btn => {
-			btn.addEventListener('click', function() {
-				const content = this.nextElementSibling;
-				const isExpanded = this.getAttribute('aria-expanded') === 'true';
-				
-				this.setAttribute('aria-expanded', !isExpanded);
-				content.style.display = isExpanded ? 'none' : 'block';
-			});
-		});
-		</script>
+		
 	</div>
 	<?php
 }
