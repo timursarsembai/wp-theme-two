@@ -227,3 +227,425 @@ function get_post_metadata_display( $post_id = null ) {
 function the_post_metadata( $post_id = null ) {
 	echo wp_kses_post( get_post_metadata_display( $post_id ) );
 }
+
+/**
+ * Output Open Graph and Schema.org structured data
+ */
+function islamic_scholars_seo_meta() {
+	$site_name = get_bloginfo( 'name' );
+	$site_url = home_url( '/' );
+	$locale = get_locale();
+	
+	// Default image (site logo or placeholder)
+	$default_image = '';
+	if ( has_custom_logo() ) {
+		$logo_id = get_theme_mod( 'custom_logo' );
+		$default_image = wp_get_attachment_image_url( $logo_id, 'full' );
+	}
+	
+	// Determine page type and get relevant data
+	if ( is_singular( 'scholar' ) ) {
+		// Scholar page
+		$scholar_id = get_the_ID();
+		$title = get_the_title();
+		$full_name = get_post_meta( $scholar_id, 'full_name', true );
+		$birth_year = intval( get_post_meta( $scholar_id, 'birth_year', true ) );
+		$death_year = intval( get_post_meta( $scholar_id, 'death_year', true ) );
+		$description = get_the_excerpt() ?: wp_trim_words( get_the_content(), 30 );
+		$url = get_permalink();
+		$image = get_the_post_thumbnail_url( $scholar_id, 'large' ) ?: $default_image;
+		$published = get_the_date( 'c' );
+		$modified = get_the_modified_date( 'c' );
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'profile',
+			'title'       => $title . ' | ' . $site_name,
+			'description' => $description,
+			'url'         => $url,
+			'image'       => $image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+		) );
+		
+		// Schema.org Person
+		$schema = array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'Person',
+			'name'        => $title,
+			'url'         => $url,
+			'description' => $description,
+		);
+		
+		if ( $full_name ) {
+			$schema['alternateName'] = $full_name;
+		}
+		
+		if ( $birth_year && $death_year ) {
+			$schema['birthDate'] = $birth_year . ' AH';
+			$schema['deathDate'] = $death_year . ' AH';
+		}
+		
+		if ( $image ) {
+			$schema['image'] = $image;
+		}
+		
+		// Get teachers
+		$teachers = (array) get_post_meta( $scholar_id, 'teachers', true );
+		if ( ! empty( $teachers ) ) {
+			$schema['knows'] = array();
+			foreach ( $teachers as $teacher_id ) {
+				$teacher = get_post( $teacher_id );
+				if ( $teacher && $teacher->post_type === 'scholar' ) {
+					$schema['knows'][] = array(
+						'@type' => 'Person',
+						'name'  => $teacher->post_title,
+						'url'   => get_permalink( $teacher_id ),
+					);
+				}
+			}
+		}
+		
+		islamic_scholars_output_schema( $schema );
+		
+	} elseif ( is_singular( 'post' ) ) {
+		// Article/Translation page
+		$post_id = get_the_ID();
+		$title = get_the_title();
+		$description = get_the_excerpt() ?: wp_trim_words( get_the_content(), 30 );
+		$url = get_permalink();
+		$image = get_the_post_thumbnail_url( $post_id, 'large' ) ?: $default_image;
+		$published = get_the_date( 'c' );
+		$modified = get_the_modified_date( 'c' );
+		$author = get_the_author();
+		$scholar_id = get_post_meta( $post_id, 'scholar_id', true );
+		$source = get_post_meta( $post_id, 'source', true );
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'article',
+			'title'       => $title . ' | ' . $site_name,
+			'description' => $description,
+			'url'         => $url,
+			'image'       => $image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+			'published'   => $published,
+			'modified'    => $modified,
+			'author'      => $author,
+		) );
+		
+		// Schema.org Article
+		$schema = array(
+			'@context'         => 'https://schema.org',
+			'@type'            => 'Article',
+			'headline'         => $title,
+			'url'              => $url,
+			'description'      => $description,
+			'datePublished'    => $published,
+			'dateModified'     => $modified,
+			'mainEntityOfPage' => array(
+				'@type' => 'WebPage',
+				'@id'   => $url,
+			),
+			'publisher'        => array(
+				'@type' => 'Organization',
+				'name'  => $site_name,
+				'url'   => $site_url,
+			),
+		);
+		
+		if ( $image ) {
+			$schema['image'] = $image;
+			$schema['publisher']['logo'] = array(
+				'@type' => 'ImageObject',
+				'url'   => $default_image ?: $image,
+			);
+		}
+		
+		// If linked to a scholar, add author info
+		if ( $scholar_id ) {
+			$scholar = get_post( $scholar_id );
+			if ( $scholar ) {
+				$schema['author'] = array(
+					'@type' => 'Person',
+					'name'  => $scholar->post_title,
+					'url'   => get_permalink( $scholar_id ),
+				);
+			}
+		}
+		
+		if ( $source ) {
+			$schema['isBasedOn'] = $source;
+		}
+		
+		// Categories
+		$categories = get_the_category( $post_id );
+		if ( $categories ) {
+			$schema['articleSection'] = wp_list_pluck( $categories, 'name' );
+		}
+		
+		islamic_scholars_output_schema( $schema );
+		
+	} elseif ( is_front_page() || is_home() ) {
+		// Homepage
+		$title = $site_name;
+		$description = get_bloginfo( 'description' );
+		$url = $site_url;
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'website',
+			'title'       => $title,
+			'description' => $description,
+			'url'         => $url,
+			'image'       => $default_image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+		) );
+		
+		// Schema.org WebSite with SearchAction
+		$schema = array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'WebSite',
+			'name'            => $site_name,
+			'url'             => $site_url,
+			'description'     => $description,
+			'potentialAction' => array(
+				'@type'       => 'SearchAction',
+				'target'      => array(
+					'@type'       => 'EntryPoint',
+					'urlTemplate' => $site_url . '?s={search_term_string}',
+				),
+				'query-input' => 'required name=search_term_string',
+			),
+		);
+		
+		if ( $default_image ) {
+			$schema['image'] = $default_image;
+		}
+		
+		islamic_scholars_output_schema( $schema );
+		
+	} elseif ( is_category() || is_tax( 'centuries' ) ) {
+		// Category or Taxonomy archive
+		$term = get_queried_object();
+		$title = $term->name . ' | ' . $site_name;
+		$description = $term->description ?: sprintf( __( 'Browse %s', 'islamic-scholars' ), $term->name );
+		$url = get_term_link( $term );
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'website',
+			'title'       => $title,
+			'description' => $description,
+			'url'         => $url,
+			'image'       => $default_image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+		) );
+		
+		// Schema.org CollectionPage
+		$schema = array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'CollectionPage',
+			'name'        => $term->name,
+			'url'         => $url,
+			'description' => $description,
+		);
+		
+		islamic_scholars_output_schema( $schema );
+		
+	} elseif ( is_post_type_archive( 'scholar' ) ) {
+		// Scholars archive
+		$title = __( 'Scholars', 'islamic-scholars' ) . ' | ' . $site_name;
+		$description = __( 'Explore the lives and works of Islamic scholars throughout history.', 'islamic-scholars' );
+		$url = get_post_type_archive_link( 'scholar' );
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'website',
+			'title'       => $title,
+			'description' => $description,
+			'url'         => $url,
+			'image'       => $default_image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+		) );
+		
+		// Schema.org CollectionPage
+		$schema = array(
+			'@context'    => 'https://schema.org',
+			'@type'       => 'CollectionPage',
+			'name'        => __( 'Scholars', 'islamic-scholars' ),
+			'url'         => $url,
+			'description' => $description,
+		);
+		
+		islamic_scholars_output_schema( $schema );
+		
+	} elseif ( is_search() ) {
+		// Search results
+		$query = get_search_query();
+		$title = sprintf( __( 'Search results for "%s"', 'islamic-scholars' ), $query ) . ' | ' . $site_name;
+		$url = get_search_link( $query );
+		
+		// Open Graph
+		islamic_scholars_output_og_tags( array(
+			'type'        => 'website',
+			'title'       => $title,
+			'description' => $title,
+			'url'         => $url,
+			'image'       => $default_image,
+			'locale'      => $locale,
+			'site_name'   => $site_name,
+		) );
+	}
+}
+
+/**
+ * Output Open Graph meta tags
+ */
+function islamic_scholars_output_og_tags( $data ) {
+	?>
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="<?php echo esc_attr( $data['type'] ); ?>">
+	<meta property="og:title" content="<?php echo esc_attr( $data['title'] ); ?>">
+	<meta property="og:description" content="<?php echo esc_attr( $data['description'] ); ?>">
+	<meta property="og:url" content="<?php echo esc_url( $data['url'] ); ?>">
+	<meta property="og:site_name" content="<?php echo esc_attr( $data['site_name'] ); ?>">
+	<meta property="og:locale" content="<?php echo esc_attr( $data['locale'] ); ?>">
+	<?php if ( ! empty( $data['image'] ) ) : ?>
+	<meta property="og:image" content="<?php echo esc_url( $data['image'] ); ?>">
+	<?php endif; ?>
+	<?php if ( ! empty( $data['published'] ) ) : ?>
+	<meta property="article:published_time" content="<?php echo esc_attr( $data['published'] ); ?>">
+	<?php endif; ?>
+	<?php if ( ! empty( $data['modified'] ) ) : ?>
+	<meta property="article:modified_time" content="<?php echo esc_attr( $data['modified'] ); ?>">
+	<?php endif; ?>
+	
+	<!-- Twitter -->
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="<?php echo esc_attr( $data['title'] ); ?>">
+	<meta name="twitter:description" content="<?php echo esc_attr( $data['description'] ); ?>">
+	<?php if ( ! empty( $data['image'] ) ) : ?>
+	<meta name="twitter:image" content="<?php echo esc_url( $data['image'] ); ?>">
+	<?php endif; ?>
+	<?php
+}
+
+/**
+ * Output Schema.org JSON-LD
+ */
+function islamic_scholars_output_schema( $schema ) {
+	?>
+	<script type="application/ld+json">
+	<?php echo wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ); ?>
+	</script>
+	<?php
+}
+
+/**
+ * Output breadcrumb Schema.org markup
+ */
+function islamic_scholars_breadcrumb_schema() {
+	if ( is_home() || is_front_page() ) {
+		return;
+	}
+	
+	$items = array();
+	$position = 1;
+	
+	// Home
+	$items[] = array(
+		'@type'    => 'ListItem',
+		'position' => $position++,
+		'name'     => __( 'Home', 'islamic-scholars' ),
+		'item'     => home_url( '/' ),
+	);
+	
+	if ( is_singular( 'scholar' ) ) {
+		// Scholars archive
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position++,
+			'name'     => __( 'Scholars', 'islamic-scholars' ),
+			'item'     => get_post_type_archive_link( 'scholar' ),
+		);
+		// Current scholar
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position++,
+			'name'     => get_the_title(),
+			'item'     => get_permalink(),
+		);
+	} elseif ( is_singular( 'post' ) ) {
+		// Category
+		$categories = get_the_category();
+		if ( $categories ) {
+			$cat = $categories[0];
+			$items[] = array(
+				'@type'    => 'ListItem',
+				'position' => $position++,
+				'name'     => $cat->name,
+				'item'     => get_category_link( $cat->term_id ),
+			);
+		}
+		// Current post
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position++,
+			'name'     => get_the_title(),
+			'item'     => get_permalink(),
+		);
+	} elseif ( is_category() ) {
+		$cat = get_queried_object();
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position++,
+			'name'     => $cat->name,
+			'item'     => get_category_link( $cat->term_id ),
+		);
+	} elseif ( is_post_type_archive( 'scholar' ) ) {
+		$items[] = array(
+			'@type'    => 'ListItem',
+			'position' => $position++,
+			'name'     => __( 'Scholars', 'islamic-scholars' ),
+			'item'     => get_post_type_archive_link( 'scholar' ),
+		);
+	}
+	
+	if ( count( $items ) > 1 ) {
+		$schema = array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'BreadcrumbList',
+			'itemListElement' => $items,
+		);
+		
+		islamic_scholars_output_schema( $schema );
+	}
+}
+
+/**
+ * Add canonical URL
+ */
+function islamic_scholars_canonical_url() {
+	if ( is_singular() ) {
+		$url = get_permalink();
+	} elseif ( is_category() || is_tax() ) {
+		$url = get_term_link( get_queried_object() );
+	} elseif ( is_post_type_archive() ) {
+		$url = get_post_type_archive_link( get_post_type() );
+	} elseif ( is_home() || is_front_page() ) {
+		$url = home_url( '/' );
+	} elseif ( is_search() ) {
+		$url = get_search_link( get_search_query() );
+	} else {
+		return;
+	}
+	
+	if ( $url && ! is_wp_error( $url ) ) {
+		echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+	}
+}

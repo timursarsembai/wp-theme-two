@@ -119,6 +119,21 @@ function islamic_scholars_setup() {
 add_action( 'after_setup_theme', 'islamic_scholars_setup' );
 
 /**
+ * Add SEO meta tags to wp_head
+ */
+function islamic_scholars_add_seo_meta() {
+	// Open Graph, Twitter Cards, Schema.org
+	islamic_scholars_seo_meta();
+	
+	// Breadcrumb schema
+	islamic_scholars_breadcrumb_schema();
+	
+	// Canonical URL
+	islamic_scholars_canonical_url();
+}
+add_action( 'wp_head', 'islamic_scholars_add_seo_meta', 5 );
+
+/**
  * Enqueue scripts and styles
  */
 function islamic_scholars_enqueue_assets() {

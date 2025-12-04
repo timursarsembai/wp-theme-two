@@ -171,6 +171,10 @@ return array(
             'Move down' => array('Переместить вниз'),
             'Use arrows or drag to reorder pairs.' => array('Используйте стрелки или перетаскивание для сортировки.'),
             'Pair' => array('Пара'),
+            
+            // SEO
+            'Browse %s' => array('Обзор: %s'),
+            'Search results for "%s"' => array('Результаты поиска по запросу «%s»'),
         ),
     ),
     'messages' => array(
