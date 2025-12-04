@@ -580,6 +580,7 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 		// Quill toolbar options
 		const toolbarOptions = [
 			['bold', 'italic', 'underline', 'strike'],
+			[{ 'list': 'ordered'}, { 'list': 'bullet' }],
 			['link'],
 			[{ 'direction': 'rtl' }],
 			['clean']

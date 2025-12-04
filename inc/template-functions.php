@@ -47,12 +47,7 @@ function the_translation_pairs( $post_id = null ) {
 			?>
 				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" id="pair-<?php echo $pair_number; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
 					<div class="pair-number-wrapper">
-						<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" title="<?php echo esc_attr( $copy_link_label ); ?>">
-							<?php echo $pair_number; ?>
-						</a>
-						<button type="button" class="copy-pair-link" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">
-							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-						</button>
+						<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">#<?php echo $pair_number; ?></a>
 					</div>
 					<div class="translation-pair-content">
 						<div class="translation-pair-original" dir="rtl">
@@ -149,8 +144,8 @@ function the_translation_pairs( $post_id = null ) {
 			}
 			
 			// Copy link functionality
-			container.querySelectorAll('.copy-pair-link').forEach(btn => {
-				btn.addEventListener('click', function(e) {
+			container.querySelectorAll('.pair-number').forEach(link => {
+				link.addEventListener('click', function(e) {
 					e.preventDefault();
 					const pairNum = this.dataset.pair;
 					const url = window.location.origin + window.location.pathname + '#pair-' + pairNum;
