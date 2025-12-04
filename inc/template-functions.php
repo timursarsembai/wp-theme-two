@@ -37,8 +37,11 @@ function the_translation_pairs( $post_id = null ) {
 	$footnote_label = __( 'Footnote', 'islamic-scholars' );
 	$copy_link_label = __( 'Copy link', 'islamic-scholars' );
 	$link_copied_label = __( 'Link copied!', 'islamic-scholars' );
+	$pair_label = __( 'Pair', 'islamic-scholars' );
+	$of_label = __( 'of', 'islamic-scholars' );
+	$share_label = __( 'Share', 'islamic-scholars' );
 	?>
-	<div class="translation-pairs-container" data-pairs-per-page="<?php echo $pairs_per_page; ?>">
+	<div class="translation-pairs-container" data-pairs-per-page="<?php echo $pairs_per_page; ?>" data-total-pairs="<?php echo $total_pairs; ?>">
 		<div class="translation-pairs">
 			<?php foreach ( $pairs as $index => $pair ) : 
 				$has_footnote = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
@@ -48,6 +51,9 @@ function the_translation_pairs( $post_id = null ) {
 				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" id="pair-<?php echo $pair_number; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
 					<div class="pair-number-wrapper">
 						<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">#<?php echo $pair_number; ?></a>
+						<button type="button" class="pair-share-btn" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $share_label ); ?>">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+						</button>
 					</div>
 					<div class="translation-pair-content">
 						<div class="translation-pair-original" dir="rtl">
@@ -64,7 +70,12 @@ function the_translation_pairs( $post_id = null ) {
 						</div>
 						<div class="translation-pair-translation">
 							<div>
-								<?php echo wp_kses_post( $pair['translation'] ); ?>
+								<?php 
+								// Remove empty <p><br></p> tags from translation
+								$translation_text = $pair['translation'];
+								$translation_text = preg_replace( '/<p>\s*<br\s*\/?>\s*<\/p>/i', '', $translation_text );
+								echo wp_kses_post( $translation_text ); 
+								?>
 							</div>
 							<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
 								<div class="pair-footnote pair-footnote-translation">
@@ -79,8 +90,9 @@ function the_translation_pairs( $post_id = null ) {
 			<?php endforeach; ?>
 		</div>
 		
+		<!-- Desktop pagination (for pages of 20 pairs) -->
 		<?php if ( $has_pagination ) : ?>
-		<div class="pairs-pagination">
+		<div class="pairs-pagination desktop-pagination">
 			<button type="button" class="pagination-btn pagination-prev" disabled>
 				<span aria-hidden="true">←</span>
 				<?php _e( 'Previous', 'islamic-scholars' ); ?>
@@ -95,22 +107,47 @@ function the_translation_pairs( $post_id = null ) {
 		</div>
 		<?php endif; ?>
 		
+		<!-- Mobile swipe pagination (one pair at a time) -->
+		<div class="pairs-pagination mobile-pagination">
+			<button type="button" class="pagination-btn mobile-prev" disabled>
+				<span aria-hidden="true">←</span>
+			</button>
+			<span class="pagination-info">
+				<?php echo $pair_label; ?> <span class="current-mobile-pair">1</span> <?php echo $of_label; ?> <span class="total-mobile-pairs"><?php echo $total_pairs; ?></span>
+			</span>
+			<button type="button" class="pagination-btn mobile-next"<?php echo $total_pairs <= 1 ? ' disabled' : ''; ?>>
+				<span aria-hidden="true">→</span>
+			</button>
+		</div>
+	</div>
+		
 		<script>
 		(function() {
 			const container = document.querySelector('.translation-pairs-container');
+			const pairsContainer = container.querySelector('.translation-pairs');
 			const pairs = container.querySelectorAll('.translation-pair');
 			const pairsPerPage = <?php echo $pairs_per_page; ?>;
 			const totalPages = <?php echo $total_pages; ?>;
+			const totalPairs = <?php echo $total_pairs; ?>;
 			const hasPagination = <?php echo $has_pagination ? 'true' : 'false'; ?>;
 			let currentPage = 1;
+			let currentMobilePair = 1;
+			let isMobile = window.innerWidth <= 768;
 			
+			// Desktop pagination elements
 			const prevBtn = container.querySelector('.pagination-prev');
 			const nextBtn = container.querySelector('.pagination-next');
 			const currentPageEl = container.querySelector('.current-page');
 			
+			// Mobile pagination elements
+			const mobilePrevBtn = container.querySelector('.mobile-prev');
+			const mobileNextBtn = container.querySelector('.mobile-next');
+			const currentMobilePairEl = container.querySelector('.current-mobile-pair');
+			
 			const copyLinkLabel = <?php echo json_encode( $copy_link_label ); ?>;
 			const linkCopiedLabel = <?php echo json_encode( $link_copied_label ); ?>;
 			
+			// Desktop: show page of pairs
 			function showPage(page, scroll = true) {
 				currentPage = page;
 				pairs.forEach(pair => {
@@ -133,6 +170,58 @@ function the_translation_pairs( $post_id = null ) {
 				}
 			}
 			
+			// Mobile: show single pair
+			function showMobilePair(pairNum, scroll = false) {
+				currentMobilePair = pairNum;
+				pairs.forEach((pair, index) => {
+					if (index + 1 === pairNum) {
+						pair.classList.remove('hidden-pair');
+						pair.classList.add('mobile-active');
+					} else {
+						pair.classList.add('hidden-pair');
+						pair.classList.remove('mobile-active');
+					}
+				});
+				
+				if (currentMobilePairEl) {
+					currentMobilePairEl.textContent = pairNum;
+				}
+				if (mobilePrevBtn) mobilePrevBtn.disabled = pairNum === 1;
+				if (mobileNextBtn) mobileNextBtn.disabled = pairNum === totalPairs;
+				
+				// Update URL hash
+				history.replaceState(null, '', '#pair-' + pairNum);
+				
+				if (scroll) {
+					container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			}
+			
+			// Switch between mobile and desktop modes
+			function updateMode() {
+				const wasMobile = isMobile;
+				isMobile = window.innerWidth <= 768;
+				
+				if (isMobile !== wasMobile) {
+					if (isMobile) {
+						// Switch to mobile mode - show current pair only
+						showMobilePair(currentMobilePair, false);
+					} else {
+						// Switch to desktop mode - show current page
+						const page = Math.floor((currentMobilePair - 1) / pairsPerPage) + 1;
+						showPage(page, false);
+					}
+				}
+			}
+			
+			// Initialize mode
+			function initMode() {
+				if (isMobile) {
+					showMobilePair(1, false);
+				}
+			}
+			
+			// Desktop pagination handlers
 			if (hasPagination && prevBtn && nextBtn) {
 				prevBtn.addEventListener('click', () => {
 					if (currentPage > 1) showPage(currentPage - 1);
@@ -143,29 +232,69 @@ function the_translation_pairs( $post_id = null ) {
 				});
 			}
 			
+			// Mobile pagination handlers
+			if (mobilePrevBtn && mobileNextBtn) {
+				mobilePrevBtn.addEventListener('click', () => {
+					if (currentMobilePair > 1) showMobilePair(currentMobilePair - 1, true);
+				});
+				
+				mobileNextBtn.addEventListener('click', () => {
+					if (currentMobilePair < totalPairs) showMobilePair(currentMobilePair + 1, true);
+				});
+			}
+			
+			// Swipe detection for mobile
+			let touchStartX = 0;
+			let touchEndX = 0;
+			const swipeThreshold = 50;
+			
+			pairsContainer.addEventListener('touchstart', (e) => {
+				touchStartX = e.changedTouches[0].screenX;
+			}, { passive: true });
+			
+			pairsContainer.addEventListener('touchend', (e) => {
+				if (!isMobile) return;
+				
+				touchEndX = e.changedTouches[0].screenX;
+				const swipeDistance = touchEndX - touchStartX;
+				
+				if (Math.abs(swipeDistance) > swipeThreshold) {
+					if (swipeDistance < 0 && currentMobilePair < totalPairs) {
+						// Swipe left - next pair
+						showMobilePair(currentMobilePair + 1, false);
+					} else if (swipeDistance > 0 && currentMobilePair > 1) {
+						// Swipe right - previous pair
+						showMobilePair(currentMobilePair - 1, false);
+					}
+				}
+			}, { passive: true });
+			
 			// Copy link functionality and scroll to pair
 			container.querySelectorAll('.pair-number').forEach(link => {
 				link.addEventListener('click', function(e) {
 					e.preventDefault();
-					const pairNum = this.dataset.pair;
+					const pairNum = parseInt(this.dataset.pair);
 					const hash = '#pair-' + pairNum;
-					const url = window.location.origin + window.location.pathname + hash;
+					// Use ?pair=N for social sharing (OG tags) + #pair-N for scrolling
+					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + hash;
 					
-					// Update URL in browser
+					// Update URL in browser (just hash for cleaner URL)
 					history.pushState(null, '', hash);
 					
-					// Scroll to the pair
-					const targetPair = document.getElementById('pair-' + pairNum);
-					if (targetPair) {
-						targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
-						targetPair.classList.add('pair-highlight');
-						setTimeout(() => {
-							targetPair.classList.remove('pair-highlight');
-						}, 2000);
+					// Scroll to the pair (on desktop)
+					if (!isMobile) {
+						const targetPair = document.getElementById('pair-' + pairNum);
+						if (targetPair) {
+							targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
+							targetPair.classList.add('pair-highlight');
+							setTimeout(() => {
+								targetPair.classList.remove('pair-highlight');
+							}, 2000);
+						}
 					}
 					
-					// Copy link to clipboard
-					navigator.clipboard.writeText(url).then(() => {
+					// Copy share URL to clipboard (with ?pair= for OG tags)
+					navigator.clipboard.writeText(shareUrl).then(() => {
 						this.classList.add('copied');
 						this.title = linkCopiedLabel;
 						setTimeout(() => {
@@ -176,41 +305,94 @@ function the_translation_pairs( $post_id = null ) {
 				});
 			});
 			
-			// Handle hash on page load - navigate to correct page and scroll to pair
+			// Share button functionality (native share or copy)
+			container.querySelectorAll('.pair-share-btn').forEach(btn => {
+				btn.addEventListener('click', function(e) {
+					e.preventDefault();
+					const pairNum = parseInt(this.dataset.pair);
+					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
+					const pageTitle = document.title;
+					const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+					
+					// Try native share API first (mobile)
+					if (navigator.share) {
+						navigator.share({
+							title: shareTitle,
+							url: shareUrl
+						}).catch(() => {
+							// User cancelled or error - fallback to copy
+							copyToClipboard(shareUrl, this);
+						});
+					} else {
+						// Fallback: copy to clipboard
+						copyToClipboard(shareUrl, this);
+					}
+				});
+			});
+			
+			function copyToClipboard(url, element) {
+				navigator.clipboard.writeText(url).then(() => {
+					element.classList.add('copied');
+					setTimeout(() => {
+						element.classList.remove('copied');
+					}, 2000);
+				});
+			}
+			
+			// Handle hash on page load - navigate to correct page/pair
 			function handleHash() {
 				const hash = window.location.hash;
 				if (hash && hash.startsWith('#pair-')) {
 					const pairNum = parseInt(hash.replace('#pair-', ''));
 					if (pairNum >= 1 && pairNum <= pairs.length) {
-						const pairIndex = pairNum - 1;
-						const targetPage = Math.floor(pairIndex / pairsPerPage) + 1;
-						
-						if (hasPagination && targetPage !== currentPage) {
-							showPage(targetPage, false);
+						if (isMobile) {
+							showMobilePair(pairNum, false);
+							setTimeout(() => {
+								const targetPair = document.getElementById('pair-' + pairNum);
+								if (targetPair) {
+									targetPair.classList.add('pair-highlight');
+									setTimeout(() => {
+										targetPair.classList.remove('pair-highlight');
+									}, 2000);
+								}
+							}, 100);
+						} else {
+							const pairIndex = pairNum - 1;
+							const targetPage = Math.floor(pairIndex / pairsPerPage) + 1;
+							
+							if (hasPagination && targetPage !== currentPage) {
+								showPage(targetPage, false);
+							}
+							
+							setTimeout(() => {
+								const targetPair = document.getElementById('pair-' + pairNum);
+								if (targetPair) {
+									targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
+									targetPair.classList.add('pair-highlight');
+									setTimeout(() => {
+										targetPair.classList.remove('pair-highlight');
+									}, 2000);
+								}
+							}, 100);
 						}
 						
-						setTimeout(() => {
-							const targetPair = document.getElementById('pair-' + pairNum);
-							if (targetPair) {
-								targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
-								targetPair.classList.add('pair-highlight');
-								setTimeout(() => {
-									targetPair.classList.remove('pair-highlight');
-								}, 2000);
-							}
-						}, 100);
+						// Update mobile pair tracker
+						currentMobilePair = pairNum;
 					}
 				}
 			}
 			
-			// Run on load
+			// Initialize
+			initMode();
 			handleHash();
+			
+			// Listen for resize
+			window.addEventListener('resize', updateMode);
 			
 			// Listen for hash changes
 			window.addEventListener('hashchange', handleHash);
 		})();
 		</script>
-	</div>
 	<?php
 }
 
@@ -311,7 +493,7 @@ function get_scholar_students( $scholar_id ) {
 }
 
 /**
- * Get breadcrumb
+ * Get breadcrumb with full category hierarchy
  */
 function islamic_scholars_breadcrumb() {
 	$separator = ' / ';
@@ -323,7 +505,16 @@ function islamic_scholars_breadcrumb() {
 		$output .= '<a href="' . home_url() . '">' . $home . '</a>' . $separator;
 
 		if ( is_category() ) {
-			$output .= '<span>' . get_category_title() . '</span>';
+			// Show parent categories hierarchy
+			$current_cat = get_queried_object();
+			$ancestors = get_ancestors( $current_cat->term_id, 'category' );
+			$ancestors = array_reverse( $ancestors );
+			
+			foreach ( $ancestors as $ancestor_id ) {
+				$ancestor = get_term( $ancestor_id, 'category' );
+				$output .= '<a href="' . get_category_link( $ancestor_id ) . '">' . esc_html( $ancestor->name ) . '</a>' . $separator;
+			}
+			$output .= '<span>' . esc_html( $current_cat->name ) . '</span>';
 		} elseif ( is_singular( 'scholar' ) ) {
 			// Scholar CPT - add archive link
 			$scholars_label = __( 'Scholars', 'islamic-scholars' );
@@ -331,14 +522,31 @@ function islamic_scholars_breadcrumb() {
 			$output .= '<a href="' . esc_url( $scholars_url ) . '">' . $scholars_label . '</a>' . $separator;
 			$output .= '<span>' . get_the_title() . '</span>';
 		} elseif ( is_single() ) {
+			// Get primary category (first one) and show its full hierarchy
 			$categories = get_the_category();
 			if ( $categories ) {
-				foreach ( $categories as $cat ) {
-					$output .= '<a href="' . get_category_link( $cat->term_id ) . '">' . $cat->name . '</a>' . $separator;
+				$primary_cat = $categories[0];
+				$ancestors = get_ancestors( $primary_cat->term_id, 'category' );
+				$ancestors = array_reverse( $ancestors );
+				
+				// Show all parent categories
+				foreach ( $ancestors as $ancestor_id ) {
+					$ancestor = get_term( $ancestor_id, 'category' );
+					$output .= '<a href="' . get_category_link( $ancestor_id ) . '">' . esc_html( $ancestor->name ) . '</a>' . $separator;
 				}
+				// Show primary category
+				$output .= '<a href="' . get_category_link( $primary_cat->term_id ) . '">' . esc_html( $primary_cat->name ) . '</a>' . $separator;
 			}
 			$output .= '<span>' . get_the_title() . '</span>';
 		} elseif ( is_page() ) {
+			// Show parent pages hierarchy
+			$post_id = get_the_ID();
+			$ancestors = get_post_ancestors( $post_id );
+			$ancestors = array_reverse( $ancestors );
+			
+			foreach ( $ancestors as $ancestor_id ) {
+				$output .= '<a href="' . get_permalink( $ancestor_id ) . '">' . get_the_title( $ancestor_id ) . '</a>' . $separator;
+			}
 			$output .= '<span>' . get_the_title() . '</span>';
 		} elseif ( is_search() ) {
 			$output .= '<span>' . __( 'Search results for', 'islamic-scholars' ) . ' "' . get_search_query() . '"</span>';
@@ -486,6 +694,22 @@ function islamic_scholars_seo_meta() {
 		$author = get_the_author();
 		$scholar_id = get_post_meta( $post_id, 'scholar_id', true );
 		$source = get_post_meta( $post_id, 'source', true );
+		
+		// Check if sharing specific pair (via ?pair=N parameter)
+		$pair_num = isset( $_GET['pair'] ) ? absint( $_GET['pair'] ) : 0;
+		$pairs = get_translation_pairs( $post_id );
+		
+		if ( $pair_num > 0 && ! empty( $pairs ) && isset( $pairs[ $pair_num - 1 ] ) ) {
+			// Sharing specific pair
+			$pair = $pairs[ $pair_num - 1 ];
+			$pair_text = wp_strip_all_tags( $pair['translation'] );
+			$pair_text = wp_trim_words( $pair_text, 25, '...' );
+			
+			$pair_label = __( 'Pair', 'islamic-scholars' );
+			$title = sprintf( '%s #%d — %s', $pair_label, $pair_num, $title );
+			$description = $pair_text;
+			$url = get_permalink() . '?pair=' . $pair_num . '#pair-' . $pair_num;
+		}
 		
 		// Open Graph
 		islamic_scholars_output_og_tags( array(

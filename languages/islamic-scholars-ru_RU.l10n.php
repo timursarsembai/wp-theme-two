@@ -201,6 +201,9 @@ return array(
             'Previous' => array('Назад'),
             'Next' => array('Далее'),
             
+            // Mobile swipe navigation
+            'Share' => array('Поделиться'),
+            
             // SEO
             'Browse %s' => array('Обзор: %s'),
             'Search results for "%s"' => array('Результаты поиска по запросу «%s»'),
@@ -373,5 +376,10 @@ return array(
         'Page %1$s of %2$s' => 'Страница %1$s из %2$s',
         'Previous' => 'Назад',
         'Next' => 'Далее',
+        
+        // Mobile swipe navigation
+        'Share' => 'Поделиться',
+        'Pair' => 'Пара',
+        'of' => 'из',
     ),
 );
