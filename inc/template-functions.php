@@ -143,13 +143,28 @@ function the_translation_pairs( $post_id = null ) {
 				});
 			}
 			
-			// Copy link functionality
+			// Copy link functionality and scroll to pair
 			container.querySelectorAll('.pair-number').forEach(link => {
 				link.addEventListener('click', function(e) {
 					e.preventDefault();
 					const pairNum = this.dataset.pair;
-					const url = window.location.origin + window.location.pathname + '#pair-' + pairNum;
+					const hash = '#pair-' + pairNum;
+					const url = window.location.origin + window.location.pathname + hash;
 					
+					// Update URL in browser
+					history.pushState(null, '', hash);
+					
+					// Scroll to the pair
+					const targetPair = document.getElementById('pair-' + pairNum);
+					if (targetPair) {
+						targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
+						targetPair.classList.add('pair-highlight');
+						setTimeout(() => {
+							targetPair.classList.remove('pair-highlight');
+						}, 2000);
+					}
+					
+					// Copy link to clipboard
 					navigator.clipboard.writeText(url).then(() => {
 						this.classList.add('copied');
 						this.title = linkCopiedLabel;
