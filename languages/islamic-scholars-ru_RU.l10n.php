@@ -184,6 +184,10 @@ return array(
             'Use arrows or drag to reorder pairs.' => array('Используйте стрелки или перетаскивание для сортировки.'),
             'Pair' => array('Пара'),
             
+            // Pair anchors
+            'Copy link' => array('Скопировать ссылку'),
+            'Link copied!' => array('Ссылка скопирована!'),
+            
             // Footnotes
             'Footnotes' => array('Сноски'),
             '+ Add Footnotes' => array('+ Добавить сноски'),
@@ -352,6 +356,10 @@ return array(
         'Move down' => 'Переместить вниз',
         'Use arrows or drag to reorder pairs.' => 'Используйте стрелки или перетаскивание для сортировки.',
         'Pair' => 'Пара',
+        
+        // Pair anchors
+        'Copy link' => 'Скопировать ссылку',
+        'Link copied!' => 'Ссылка скопирована!',
         
         // Footnotes
         'Footnotes' => 'Сноски',

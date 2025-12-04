@@ -35,37 +35,50 @@ function the_translation_pairs( $post_id = null ) {
 	$has_pagination = $total_pairs > $pairs_per_page;
 	
 	$footnote_label = __( 'Footnote', 'islamic-scholars' );
+	$copy_link_label = __( 'Copy link', 'islamic-scholars' );
+	$link_copied_label = __( 'Link copied!', 'islamic-scholars' );
 	?>
 	<div class="translation-pairs-container" data-pairs-per-page="<?php echo $pairs_per_page; ?>">
 		<div class="translation-pairs">
 			<?php foreach ( $pairs as $index => $pair ) : 
 				$has_footnote = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
 				$page_num = floor( $index / $pairs_per_page ) + 1;
+				$pair_number = $index + 1;
 			?>
-				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
-					<div class="translation-pair-original" dir="rtl">
-						<div class="arabic-text">
-							<?php echo wp_kses_post( $pair['original'] ); ?>
-						</div>
-						<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
-							<div class="pair-footnote pair-footnote-original">
-								<div class="footnote-content">
-									<?php echo wp_kses_post( $pair['footnote_original'] ); ?>
-								</div>
-							</div>
-						<?php endif; ?>
+				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" id="pair-<?php echo $pair_number; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
+					<div class="pair-number-wrapper">
+						<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" title="<?php echo esc_attr( $copy_link_label ); ?>">
+							<?php echo $pair_number; ?>
+						</a>
+						<button type="button" class="copy-pair-link" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+						</button>
 					</div>
-					<div class="translation-pair-translation">
-						<div>
-							<?php echo wp_kses_post( $pair['translation'] ); ?>
-						</div>
-						<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
-							<div class="pair-footnote pair-footnote-translation">
-								<div class="footnote-content">
-									<?php echo wp_kses_post( $pair['footnote_translation'] ); ?>
-								</div>
+					<div class="translation-pair-content">
+						<div class="translation-pair-original" dir="rtl">
+							<div class="arabic-text">
+								<?php echo wp_kses_post( $pair['original'] ); ?>
 							</div>
-						<?php endif; ?>
+							<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
+								<div class="pair-footnote pair-footnote-original">
+									<div class="footnote-content">
+										<?php echo wp_kses_post( $pair['footnote_original'] ); ?>
+									</div>
+								</div>
+							<?php endif; ?>
+						</div>
+						<div class="translation-pair-translation">
+							<div>
+								<?php echo wp_kses_post( $pair['translation'] ); ?>
+							</div>
+							<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
+								<div class="pair-footnote pair-footnote-translation">
+									<div class="footnote-content">
+										<?php echo wp_kses_post( $pair['footnote_translation'] ); ?>
+									</div>
+								</div>
+							<?php endif; ?>
+						</div>
 					</div>
 				</div>
 			<?php endforeach; ?>
@@ -85,19 +98,25 @@ function the_translation_pairs( $post_id = null ) {
 				<span aria-hidden="true">→</span>
 			</button>
 		</div>
+		<?php endif; ?>
+		
 		<script>
 		(function() {
 			const container = document.querySelector('.translation-pairs-container');
 			const pairs = container.querySelectorAll('.translation-pair');
 			const pairsPerPage = <?php echo $pairs_per_page; ?>;
 			const totalPages = <?php echo $total_pages; ?>;
+			const hasPagination = <?php echo $has_pagination ? 'true' : 'false'; ?>;
 			let currentPage = 1;
 			
 			const prevBtn = container.querySelector('.pagination-prev');
 			const nextBtn = container.querySelector('.pagination-next');
 			const currentPageEl = container.querySelector('.current-page');
 			
-			function showPage(page) {
+			const copyLinkLabel = <?php echo json_encode( $copy_link_label ); ?>;
+			const linkCopiedLabel = <?php echo json_encode( $link_copied_label ); ?>;
+			
+			function showPage(page, scroll = true) {
 				currentPage = page;
 				pairs.forEach(pair => {
 					const pairPage = parseInt(pair.dataset.page);
@@ -108,26 +127,79 @@ function the_translation_pairs( $post_id = null ) {
 					}
 				});
 				
-				currentPageEl.textContent = page;
-				prevBtn.disabled = page === 1;
-				nextBtn.disabled = page === totalPages;
+				if (currentPageEl) {
+					currentPageEl.textContent = page;
+				}
+				if (prevBtn) prevBtn.disabled = page === 1;
+				if (nextBtn) nextBtn.disabled = page === totalPages;
 				
-				// Scroll to top of pairs
-				container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				if (scroll) {
+					container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
 			}
 			
-			prevBtn.addEventListener('click', () => {
-				if (currentPage > 1) showPage(currentPage - 1);
+			if (hasPagination && prevBtn && nextBtn) {
+				prevBtn.addEventListener('click', () => {
+					if (currentPage > 1) showPage(currentPage - 1);
+				});
+				
+				nextBtn.addEventListener('click', () => {
+					if (currentPage < totalPages) showPage(currentPage + 1);
+				});
+			}
+			
+			// Copy link functionality
+			container.querySelectorAll('.copy-pair-link').forEach(btn => {
+				btn.addEventListener('click', function(e) {
+					e.preventDefault();
+					const pairNum = this.dataset.pair;
+					const url = window.location.origin + window.location.pathname + '#pair-' + pairNum;
+					
+					navigator.clipboard.writeText(url).then(() => {
+						this.classList.add('copied');
+						this.title = linkCopiedLabel;
+						setTimeout(() => {
+							this.classList.remove('copied');
+							this.title = copyLinkLabel;
+						}, 2000);
+					});
+				});
 			});
 			
-			nextBtn.addEventListener('click', () => {
-				if (currentPage < totalPages) showPage(currentPage + 1);
-			});
+			// Handle hash on page load - navigate to correct page and scroll to pair
+			function handleHash() {
+				const hash = window.location.hash;
+				if (hash && hash.startsWith('#pair-')) {
+					const pairNum = parseInt(hash.replace('#pair-', ''));
+					if (pairNum >= 1 && pairNum <= pairs.length) {
+						const pairIndex = pairNum - 1;
+						const targetPage = Math.floor(pairIndex / pairsPerPage) + 1;
+						
+						if (hasPagination && targetPage !== currentPage) {
+							showPage(targetPage, false);
+						}
+						
+						setTimeout(() => {
+							const targetPair = document.getElementById('pair-' + pairNum);
+							if (targetPair) {
+								targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
+								targetPair.classList.add('pair-highlight');
+								setTimeout(() => {
+									targetPair.classList.remove('pair-highlight');
+								}, 2000);
+							}
+						}, 100);
+					}
+				}
+			}
+			
+			// Run on load
+			handleHash();
+			
+			// Listen for hash changes
+			window.addEventListener('hashchange', handleHash);
 		})();
 		</script>
-		<?php endif; ?>
-		
-		
 	</div>
 	<?php
 }
