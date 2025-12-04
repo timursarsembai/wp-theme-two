@@ -794,6 +794,45 @@ function islamic_scholars_seo_meta() {
 		
 		islamic_scholars_output_schema( $schema );
 		
+		// FAQ Schema for Fatawa (Q&A format)
+		// Check if post is in fatawa/fatwa category
+		$is_fatwa = has_category( array( 'fatawa', 'fatwa', 'фетвы', 'фетва' ), $post_id );
+		
+		if ( $is_fatwa && ! empty( $pairs ) && count( $pairs ) >= 1 ) {
+			// First pair is the question, rest is the answer
+			$faq_schema = array(
+				'@context'   => 'https://schema.org',
+				'@type'      => 'FAQPage',
+				'mainEntity' => array(),
+			);
+			
+			// Get question from first pair (translation text)
+			$question_text = wp_strip_all_tags( $pairs[0]['translation'] );
+			$question_text = trim( $question_text );
+			
+			// Get answer from remaining pairs
+			$answer_parts = array();
+			for ( $i = 1; $i < count( $pairs ); $i++ ) {
+				$answer_parts[] = wp_strip_all_tags( $pairs[ $i ]['translation'] );
+			}
+			$answer_text = implode( "\n\n", $answer_parts );
+			$answer_text = trim( $answer_text );
+			
+			// If we have both question and answer, add to FAQ schema
+			if ( $question_text && $answer_text ) {
+				$faq_schema['mainEntity'][] = array(
+					'@type'          => 'Question',
+					'name'           => $question_text,
+					'acceptedAnswer' => array(
+						'@type' => 'Answer',
+						'text'  => $answer_text,
+					),
+				);
+				
+				islamic_scholars_output_schema( $faq_schema );
+			}
+		}
+		
 	} elseif ( is_front_page() || is_home() ) {
 		// Homepage
 		$title = $site_name;
