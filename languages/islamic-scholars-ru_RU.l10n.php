@@ -28,6 +28,7 @@ return array(
             'Teachers (Mentors)' => array('Учителя (Наставники)'),
             'Known Students' => array('Известные ученики'),
             'Translations by this Scholar' => array('Переводы этого учёного'),
+            '%s — his works' => array('%s — его труды'),
             'No scholars found.' => array('Учёные не найдены.'),
             
             // Scholar info
@@ -203,6 +204,7 @@ return array(
         'Teachers (Mentors)' => 'Учителя (Наставники)',
         'Known Students' => 'Известные ученики',
         'Translations by this Scholar' => 'Переводы этого учёного',
+        '%s — his works' => '%s — его труды',
         'No scholars found.' => 'Учёные не найдены.',
         'Full name: %s' => 'Полное имя: %s',
         'Kunyah: %s' => 'Кунья: %s',

@@ -138,7 +138,7 @@ get_header(); ?>
 				?>
 				<div style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--color-border);">
 					
-					<h3><?php _e( 'Translations by this Scholar', 'islamic-scholars' ); ?></h3>
+					<h3><?php printf( __( '%s — his works', 'islamic-scholars' ), get_the_title() ); ?></h3>
 					<div class="scholar-works" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-2xl);">
 						<?php foreach ( $translations as $post ) : setup_postdata( $post ); ?>
 							<div class="card">
