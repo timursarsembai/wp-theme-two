@@ -28,6 +28,15 @@ function islamic_scholars_register_scholar_metaboxes() {
 		'normal',
 		'high'
 	);
+	
+	add_meta_box(
+		'scholar_audio',
+		__( 'Audio Lectures', 'islamic-scholars' ),
+		'islamic_scholars_scholar_audio_callback',
+		'scholar',
+		'normal',
+		'default'
+	);
 }
 add_action( 'add_meta_boxes', 'islamic_scholars_register_scholar_metaboxes' );
 
@@ -111,6 +120,149 @@ function islamic_scholars_scholar_teachers_callback( $post ) {
 }
 
 /**
+ * Scholar audio meta box callback
+ */
+function islamic_scholars_scholar_audio_callback( $post ) {
+	wp_nonce_field( 'islamic_scholars_audio_nonce', 'islamic_scholars_audio_nonce' );
+	
+	// Enqueue media uploader
+	wp_enqueue_media();
+	
+	$audio_files = get_post_meta( $post->ID, 'audio_files', true );
+	if ( ! is_array( $audio_files ) ) {
+		$audio_files = array();
+	}
+	
+	$add_audio_label = __( '+ Add Audio', 'islamic-scholars' );
+	$remove_label = __( 'Remove', 'islamic-scholars' );
+	$title_placeholder = __( 'Audio title...', 'islamic-scholars' );
+	$select_audio_label = __( 'Select Audio', 'islamic-scholars' );
+	$choose_audio_label = __( 'Choose Audio File', 'islamic-scholars' );
+	$use_audio_label = __( 'Use this audio', 'islamic-scholars' );
+	?>
+	<style>
+		.audio-item {
+			display: flex;
+			gap: 10px;
+			align-items: center;
+			padding: 10px;
+			background: #f9f9f9;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			margin-bottom: 10px;
+		}
+		.audio-item input[type="text"] {
+			flex: 1;
+			padding: 8px;
+		}
+		.audio-item .audio-url {
+			width: 300px;
+			padding: 8px;
+			background: #fff;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 12px;
+			color: #666;
+		}
+		.audio-item .select-audio-btn {
+			white-space: nowrap;
+		}
+		.audio-item .remove-audio-btn {
+			background: #dc3545 !important;
+			border-color: #dc3545 !important;
+			color: #fff !important;
+		}
+	</style>
+	
+	<div id="audio-files-container" style="padding: 10px 0;">
+		<p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+			<?php _e( 'Add audio lectures or recordings by this scholar.', 'islamic-scholars' ); ?>
+		</p>
+		
+		<div id="audio-files-wrapper">
+			<?php foreach ( $audio_files as $index => $audio ) : ?>
+				<div class="audio-item" data-index="<?php echo $index; ?>">
+					<input type="text" name="audio_files[<?php echo $index; ?>][title]" value="<?php echo esc_attr( $audio['title'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $title_placeholder ); ?>">
+					<input type="text" class="audio-url" name="audio_files[<?php echo $index; ?>][url]" value="<?php echo esc_url( $audio['url'] ?? '' ); ?>" readonly>
+					<button type="button" class="button select-audio-btn"><?php echo esc_html( $select_audio_label ); ?></button>
+					<button type="button" class="button remove-audio-btn"><?php echo esc_html( $remove_label ); ?></button>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		
+		<button type="button" id="add-audio-btn" class="button button-primary" style="margin-top: 10px;">
+			<?php echo esc_html( $add_audio_label ); ?>
+		</button>
+	</div>
+	
+	<script>
+	jQuery(document).ready(function($) {
+		const wrapper = $('#audio-files-wrapper');
+		const addBtn = $('#add-audio-btn');
+		
+		const titlePlaceholder = <?php echo json_encode( $title_placeholder ); ?>;
+		const selectAudioLabel = <?php echo json_encode( $select_audio_label ); ?>;
+		const removeLabel = <?php echo json_encode( $remove_label ); ?>;
+		const chooseAudioLabel = <?php echo json_encode( $choose_audio_label ); ?>;
+		const useAudioLabel = <?php echo json_encode( $use_audio_label ); ?>;
+		
+		function getNextIndex() {
+			let maxIndex = -1;
+			wrapper.find('.audio-item').each(function() {
+				const idx = parseInt($(this).data('index')) || 0;
+				if (idx > maxIndex) maxIndex = idx;
+			});
+			return maxIndex + 1;
+		}
+		
+		// Add new audio item
+		addBtn.on('click', function() {
+			const index = getNextIndex();
+			const html = `
+				<div class="audio-item" data-index="${index}">
+					<input type="text" name="audio_files[${index}][title]" placeholder="${titlePlaceholder}">
+					<input type="text" class="audio-url" name="audio_files[${index}][url]" readonly>
+					<button type="button" class="button select-audio-btn">${selectAudioLabel}</button>
+					<button type="button" class="button remove-audio-btn">${removeLabel}</button>
+				</div>
+			`;
+			wrapper.append(html);
+		});
+		
+		// Remove audio item
+		wrapper.on('click', '.remove-audio-btn', function() {
+			$(this).closest('.audio-item').remove();
+		});
+		
+		// Select audio file
+		wrapper.on('click', '.select-audio-btn', function() {
+			const item = $(this).closest('.audio-item');
+			const urlInput = item.find('.audio-url');
+			const titleInput = item.find('input[type="text"]:first');
+			
+			const frame = wp.media({
+				title: chooseAudioLabel,
+				button: { text: useAudioLabel },
+				library: { type: 'audio' },
+				multiple: false
+			});
+			
+			frame.on('select', function() {
+				const attachment = frame.state().get('selection').first().toJSON();
+				urlInput.val(attachment.url);
+				if (!titleInput.val()) {
+					titleInput.val(attachment.title || attachment.filename);
+				}
+			});
+			
+			frame.open();
+		});
+	});
+	</script>
+	<?php
+}
+
+/**
  * Save scholar meta
  */
 function islamic_scholars_save_scholar_meta( $post_id ) {
@@ -145,6 +297,23 @@ function islamic_scholars_save_scholar_meta( $post_id ) {
 		 wp_verify_nonce( $_POST['islamic_scholars_teachers_nonce'], 'islamic_scholars_teachers_nonce' ) ) {
 		$teachers = isset( $_POST['teachers'] ) ? array_map( 'intval', $_POST['teachers'] ) : array();
 		update_post_meta( $post_id, 'teachers', $teachers );
+	}
+	
+	// Save audio files
+	if ( isset( $_POST['islamic_scholars_audio_nonce'] ) &&
+		 wp_verify_nonce( $_POST['islamic_scholars_audio_nonce'], 'islamic_scholars_audio_nonce' ) ) {
+		$audio_files = array();
+		if ( isset( $_POST['audio_files'] ) && is_array( $_POST['audio_files'] ) ) {
+			foreach ( $_POST['audio_files'] as $audio ) {
+				if ( ! empty( $audio['url'] ) ) {
+					$audio_files[] = array(
+						'title' => sanitize_text_field( $audio['title'] ?? '' ),
+						'url' => esc_url_raw( $audio['url'] ),
+					);
+				}
+			}
+		}
+		update_post_meta( $post_id, 'audio_files', $audio_files );
 	}
 }
 add_action( 'save_post', 'islamic_scholars_save_scholar_meta' );

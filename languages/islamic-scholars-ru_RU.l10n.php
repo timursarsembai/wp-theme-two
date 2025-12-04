@@ -47,6 +47,17 @@ return array(
             'Select teachers/mentors of this scholar. Their students will be highlighted in the Chronology page when you select this scholar.' => array('Выберите учителей/наставников этого учёного. Их ученики будут подсвечены на странице Хронологии.'),
             'No other scholars found. Create other scholars first.' => array('Другие учёные не найдены. Сначала создайте других учёных.'),
             
+            // Admin - Audio
+            'Audio Lectures' => array('Аудиолекции'),
+            'Add audio lectures or recordings by this scholar.' => array('Добавьте аудиолекции или записи этого учёного.'),
+            '+ Add Audio' => array('+ Добавить аудио'),
+            'Audio title...' => array('Название аудио...'),
+            'Select Audio' => array('Выбрать аудио'),
+            'Choose Audio File' => array('Выберите аудиофайл'),
+            'Use this audio' => array('Использовать это аудио'),
+            'Audio' => array('Аудио'),
+            'Your browser does not support the audio element.' => array('Ваш браузер не поддерживает аудио элемент.'),
+            
             // Admin - Translation
             'Original & Translation Pairs' => array('Пары оригинал и перевод'),
             'Translation Metadata' => array('Метаданные перевода'),
@@ -218,6 +229,15 @@ return array(
         'The century will be automatically assigned based on birth and death years.' => 'Век будет автоматически назначен на основе годов рождения и смерти.',
         'Select teachers/mentors of this scholar. Their students will be highlighted in the Chronology page when you select this scholar.' => 'Выберите учителей/наставников этого учёного.',
         'No other scholars found. Create other scholars first.' => 'Другие учёные не найдены.',
+        'Audio Lectures' => 'Аудиолекции',
+        'Add audio lectures or recordings by this scholar.' => 'Добавьте аудиолекции или записи этого учёного.',
+        '+ Add Audio' => '+ Добавить аудио',
+        'Audio title...' => 'Название аудио...',
+        'Select Audio' => 'Выбрать аудио',
+        'Choose Audio File' => 'Выберите аудиофайл',
+        'Use this audio' => 'Использовать это аудио',
+        'Audio' => 'Аудио',
+        'Your browser does not support the audio element.' => 'Ваш браузер не поддерживает аудио элемент.',
         'Original & Translation Pairs' => 'Пары оригинал и перевод',
         'Translation Metadata' => 'Метаданные перевода',
         'Add pairs of original (Arabic) text and their translations. Each pair will be displayed side-by-side on the front-end (desktop) or stacked (mobile).' => 'Добавьте пары оригинального текста и их переводов.',
