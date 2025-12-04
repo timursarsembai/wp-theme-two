@@ -527,7 +527,7 @@ body.menu-open {
     z-index: 10;
   }
   
-  .pagination-btn, .mobile-pagination .pagination-btn {
+  .mobile-pagination .pagination-btn {
     height: auto;
   }
   
@@ -560,6 +560,7 @@ body.menu-open {
   cursor: pointer;
   font-size: var(--fs-sm);
   transition: background-color 0.2s ease;
+  height: auto !important;
 }
 
 .pagination-btn:hover:not(:disabled) {
