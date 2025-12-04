@@ -162,18 +162,29 @@ get_header(); ?>
 				<div style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--color-border);">
 					
 					<h3><?php printf( __( '%s — his works', 'islamic-scholars' ), get_the_title() ); ?></h3>
-					<div class="scholar-works" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-2xl);">
+					<div class="scholar-works" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-2xl);">
 						<?php foreach ( $translations as $post ) : setup_postdata( $post ); ?>
-							<div class="card">
-								<?php if ( has_post_thumbnail() ) : ?>
-									<a href="<?php the_permalink(); ?>" class="post-thumbnail">
-										<?php the_post_thumbnail( 'medium', array( 'style' => 'width: 100%; height: auto; border-radius: 4px; display: block; margin-bottom: var(--spacing-md);' ) ); ?>
+							<div class="card post-card post-card-compact">
+								<div class="card-content">
+									<h4 class="card-title">
+										<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
+									</h4>
+									<div class="card-meta" style="font-size: var(--fs-sm); color: var(--color-text-light); display: flex; gap: var(--spacing-lg); flex-wrap: wrap; margin-bottom: var(--spacing-md);">
+										<span><?php echo esc_html( get_the_date( 'j F, Y' ) ); ?></span>
+										<?php
+										$categories = get_the_category();
+										if ( $categories ) {
+											$cat_links = array_map( function( $cat ) {
+												return '<a href="' . esc_url( get_category_link( $cat->term_id ) ) . '">' . esc_html( $cat->name ) . '</a>';
+											}, $categories );
+											echo '<span>' . implode( ', ', $cat_links ) . '</span>';
+										}
+										?>
+									</div>
+									<a href="<?php the_permalink(); ?>" style="color: var(--color-primary-dark); font-weight: 600; font-size: var(--fs-sm); display: inline-block;">
+										<?php _e( 'Read more →', 'islamic-scholars' ); ?>
 									</a>
-								<?php endif; ?>
-								<h4 class="card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
-								<p class="card-meta">
-									<?php echo esc_html( get_the_excerpt() ); ?>
-								</p>
+								</div>
 							</div>
 						<?php endforeach; wp_reset_postdata(); ?>
 					</div>
