@@ -172,6 +172,19 @@ return array(
             'Use arrows or drag to reorder pairs.' => array('Используйте стрелки или перетаскивание для сортировки.'),
             'Pair' => array('Пара'),
             
+            // Footnotes
+            'Footnotes' => array('Сноски'),
+            '+ Add Footnotes' => array('+ Добавить сноски'),
+            'Remove Footnotes' => array('Удалить сноски'),
+            'Footnote (Original)' => array('Сноска (оригинал)'),
+            'Footnote (Translation)' => array('Сноска (перевод)'),
+            'Footnote' => array('Сноска'),
+            
+            // Pagination
+            'Page %1$s of %2$s' => array('Страница %1$s из %2$s'),
+            'Previous' => array('Назад'),
+            'Next' => array('Далее'),
+            
             // SEO
             'Browse %s' => array('Обзор: %s'),
             'Search results for "%s"' => array('Результаты поиска по запросу «%s»'),
@@ -317,5 +330,18 @@ return array(
         'Move down' => 'Переместить вниз',
         'Use arrows or drag to reorder pairs.' => 'Используйте стрелки или перетаскивание для сортировки.',
         'Pair' => 'Пара',
+        
+        // Footnotes
+        'Footnotes' => 'Сноски',
+        '+ Add Footnotes' => '+ Добавить сноски',
+        'Remove Footnotes' => 'Удалить сноски',
+        'Footnote (Original)' => 'Сноска (оригинал)',
+        'Footnote (Translation)' => 'Сноска (перевод)',
+        'Footnote' => 'Сноска',
+        
+        // Pagination
+        'Page %1$s of %2$s' => 'Страница %1$s из %2$s',
+        'Previous' => 'Назад',
+        'Next' => 'Далее',
     ),
 );

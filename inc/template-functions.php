@@ -20,7 +20,7 @@ function get_translation_pairs( $post_id = null ) {
 }
 
 /**
- * Display translation pairs
+ * Display translation pairs with pagination and footnotes
  */
 function the_translation_pairs( $post_id = null ) {
 	$pairs = get_translation_pairs( $post_id );
@@ -28,22 +28,125 @@ function the_translation_pairs( $post_id = null ) {
 	if ( empty( $pairs ) ) {
 		return;
 	}
+	
+	$pairs_per_page = 20;
+	$total_pairs = count( $pairs );
+	$total_pages = ceil( $total_pairs / $pairs_per_page );
+	$has_pagination = $total_pairs > $pairs_per_page;
+	
+	$footnote_label = __( 'Footnote', 'islamic-scholars' );
 	?>
-	<div class="translation-pairs">
-		<?php foreach ( $pairs as $index => $pair ) : ?>
-			<div class="translation-pair" data-pair-id="<?php echo $index; ?>">
-				<div class="translation-pair-original" dir="rtl">
-					<div class="arabic-text">
-						<?php echo wp_kses_post( $pair['original'] ); ?>
+	<div class="translation-pairs-container" data-pairs-per-page="<?php echo $pairs_per_page; ?>">
+		<div class="translation-pairs">
+			<?php foreach ( $pairs as $index => $pair ) : 
+				$has_footnote = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
+				$page_num = floor( $index / $pairs_per_page ) + 1;
+			?>
+				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
+					<div class="translation-pair-original" dir="rtl">
+						<div class="arabic-text">
+							<?php echo wp_kses_post( $pair['original'] ); ?>
+						</div>
+						<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
+							<div class="pair-footnote pair-footnote-original">
+								<button type="button" class="footnote-toggle" aria-expanded="false">
+									<span class="footnote-icon">📝</span>
+									<span class="footnote-label"><?php echo esc_html( $footnote_label ); ?></span>
+								</button>
+								<div class="footnote-content" style="display: none;">
+									<?php echo wp_kses_post( $pair['footnote_original'] ); ?>
+								</div>
+							</div>
+						<?php endif; ?>
+					</div>
+					<div class="translation-pair-translation">
+						<div>
+							<?php echo wp_kses_post( $pair['translation'] ); ?>
+						</div>
+						<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
+							<div class="pair-footnote pair-footnote-translation">
+								<button type="button" class="footnote-toggle" aria-expanded="false">
+									<span class="footnote-icon">📝</span>
+									<span class="footnote-label"><?php echo esc_html( $footnote_label ); ?></span>
+								</button>
+								<div class="footnote-content" style="display: none;">
+									<?php echo wp_kses_post( $pair['footnote_translation'] ); ?>
+								</div>
+							</div>
+						<?php endif; ?>
 					</div>
 				</div>
-				<div class="translation-pair-translation">
-					<div>
-						<?php echo wp_kses_post( $pair['translation'] ); ?>
-					</div>
-				</div>
-			</div>
-		<?php endforeach; ?>
+			<?php endforeach; ?>
+		</div>
+		
+		<?php if ( $has_pagination ) : ?>
+		<div class="pairs-pagination">
+			<button type="button" class="pagination-btn pagination-prev" disabled>
+				<span aria-hidden="true">←</span>
+				<?php _e( 'Previous', 'islamic-scholars' ); ?>
+			</button>
+			<span class="pagination-info">
+				<?php printf( __( 'Page %1$s of %2$s', 'islamic-scholars' ), '<span class="current-page">1</span>', '<span class="total-pages">' . $total_pages . '</span>' ); ?>
+			</span>
+			<button type="button" class="pagination-btn pagination-next">
+				<?php _e( 'Next', 'islamic-scholars' ); ?>
+				<span aria-hidden="true">→</span>
+			</button>
+		</div>
+		<script>
+		(function() {
+			const container = document.querySelector('.translation-pairs-container');
+			const pairs = container.querySelectorAll('.translation-pair');
+			const pairsPerPage = <?php echo $pairs_per_page; ?>;
+			const totalPages = <?php echo $total_pages; ?>;
+			let currentPage = 1;
+			
+			const prevBtn = container.querySelector('.pagination-prev');
+			const nextBtn = container.querySelector('.pagination-next');
+			const currentPageEl = container.querySelector('.current-page');
+			
+			function showPage(page) {
+				currentPage = page;
+				pairs.forEach(pair => {
+					const pairPage = parseInt(pair.dataset.page);
+					if (pairPage === page) {
+						pair.classList.remove('hidden-pair');
+					} else {
+						pair.classList.add('hidden-pair');
+					}
+				});
+				
+				currentPageEl.textContent = page;
+				prevBtn.disabled = page === 1;
+				nextBtn.disabled = page === totalPages;
+				
+				// Scroll to top of pairs
+				container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+			
+			prevBtn.addEventListener('click', () => {
+				if (currentPage > 1) showPage(currentPage - 1);
+			});
+			
+			nextBtn.addEventListener('click', () => {
+				if (currentPage < totalPages) showPage(currentPage + 1);
+			});
+		})();
+		</script>
+		<?php endif; ?>
+		
+		<script>
+		// Footnote toggle functionality
+		document.querySelectorAll('.footnote-toggle').forEach(btn => {
+			btn.addEventListener('click', function() {
+				const content = this.nextElementSibling;
+				const isExpanded = this.getAttribute('aria-expanded') === 'true';
+				
+				this.setAttribute('aria-expanded', !isExpanded);
+				content.style.display = isExpanded ? 'none' : 'block';
+			});
+		});
+		</script>
 	</div>
 	<?php
 }

@@ -188,6 +188,11 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 	
 	// Get translated string for JavaScript
 	$pair_label = __( 'Pair', 'islamic-scholars' );
+	$footnotes_label = __( 'Footnotes', 'islamic-scholars' );
+	$add_footnotes_label = __( '+ Add Footnotes', 'islamic-scholars' );
+	$remove_footnotes_label = __( 'Remove Footnotes', 'islamic-scholars' );
+	$footnote_original_label = __( 'Footnote (Original)', 'islamic-scholars' );
+	$footnote_translation_label = __( 'Footnote (Translation)', 'islamic-scholars' );
 	?>
 	<!-- Quill.js CDN -->
 	<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
@@ -283,6 +288,35 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 		.quill-wrapper.translation-editor .ql-editor {
 			font-family: 'Merriweather', serif;
 		}
+		/* Footnotes styles */
+		.footnotes-section {
+			margin-top: 15px;
+			padding: 15px;
+			background-color: #fff8e1;
+			border: 1px dashed #ffc107;
+			border-radius: 4px;
+		}
+		.footnotes-section .quill-wrapper .ql-container {
+			min-height: 80px;
+		}
+		.footnotes-section .quill-wrapper .ql-editor {
+			min-height: 80px;
+		}
+		.add-footnotes-btn {
+			margin-top: 10px;
+			background: #ffc107 !important;
+			border-color: #ffc107 !important;
+			color: #333 !important;
+		}
+		.add-footnotes-btn:hover {
+			background: #ffb300 !important;
+			border-color: #ffb300 !important;
+		}
+		.remove-footnotes-btn {
+			background: #fff !important;
+			border-color: #ffc107 !important;
+			color: #333 !important;
+		}
 	</style>
 	
 	<div id="translation-pairs-container" style="padding: 10px 0;">
@@ -292,7 +326,9 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 		</p>
 		
 		<div id="pairs-wrapper">
-			<?php foreach ( $pairs as $index => $pair ) : ?>
+			<?php foreach ( $pairs as $index => $pair ) : 
+				$has_footnotes = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
+			?>
 				<div class="translation-pair-row" draggable="true" data-index="<?php echo $index; ?>" style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
 					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 						<div style="display: flex; align-items: center; gap: 10px;">
@@ -321,6 +357,33 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 							</div>
 						</div>
 					</div>
+					
+					<!-- Footnotes toggle button -->
+					<button type="button" class="button add-footnotes-btn" <?php echo $has_footnotes ? 'style="display:none;"' : ''; ?>>
+						<?php echo esc_html( $add_footnotes_label ); ?>
+					</button>
+					
+					<!-- Footnotes section -->
+					<div class="footnotes-section" <?php echo ! $has_footnotes ? 'style="display:none;"' : ''; ?>>
+						<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+							<strong>📝 <?php echo esc_html( $footnotes_label ); ?></strong>
+							<button type="button" class="button remove-footnotes-btn"><?php echo esc_html( $remove_footnotes_label ); ?></button>
+						</div>
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+							<div>
+								<label style="display: block; margin-bottom: 5px;"><?php echo esc_html( $footnote_original_label ); ?></label>
+								<div class="quill-wrapper arabic-editor">
+									<div class="quill-editor" data-type="footnote_original"><?php echo wp_kses_post( $pair['footnote_original'] ?? '' ); ?></div>
+								</div>
+							</div>
+							<div>
+								<label style="display: block; margin-bottom: 5px;"><?php echo esc_html( $footnote_translation_label ); ?></label>
+								<div class="quill-wrapper translation-editor">
+									<div class="quill-editor" data-type="footnote_translation"><?php echo wp_kses_post( $pair['footnote_translation'] ?? '' ); ?></div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			<?php endforeach; ?>
 		</div>
@@ -338,6 +401,11 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 		const wrapper = document.getElementById( 'pairs-wrapper' );
 		const hiddenInputs = document.getElementById( 'pairs-hidden-inputs' );
 		const pairLabel = <?php echo json_encode( $pair_label ); ?>;
+		const footnotesLabel = <?php echo json_encode( $footnotes_label ); ?>;
+		const addFootnotesLabel = <?php echo json_encode( $add_footnotes_label ); ?>;
+		const removeFootnotesLabel = <?php echo json_encode( $remove_footnotes_label ); ?>;
+		const footnoteOriginalLabel = <?php echo json_encode( $footnote_original_label ); ?>;
+		const footnoteTranslationLabel = <?php echo json_encode( $footnote_translation_label ); ?>;
 		let draggedItem = null;
 		
 		// Quill toolbar options
@@ -377,11 +445,15 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 			hiddenInputs.innerHTML = '';
 			const rows = wrapper.querySelectorAll( '.translation-pair-row' );
 			rows.forEach( ( row, index ) => {
-				const originalEditor = row.querySelector( '.arabic-editor .quill-editor' );
-				const translationEditor = row.querySelector( '.translation-editor .quill-editor' );
+				const originalEditor = row.querySelector( '.quill-editor[data-type="original"]' );
+				const translationEditor = row.querySelector( '.quill-editor[data-type="translation"]' );
+				const footnoteOrigEditor = row.querySelector( '.quill-editor[data-type="footnote_original"]' );
+				const footnoteTransEditor = row.querySelector( '.quill-editor[data-type="footnote_translation"]' );
 				
 				const original = originalEditor.quillInstance ? originalEditor.quillInstance.root.innerHTML : '';
 				const translation = translationEditor.quillInstance ? translationEditor.quillInstance.root.innerHTML : '';
+				const footnoteOrig = footnoteOrigEditor && footnoteOrigEditor.quillInstance ? footnoteOrigEditor.quillInstance.root.innerHTML : '';
+				const footnoteTrans = footnoteTransEditor && footnoteTransEditor.quillInstance ? footnoteTransEditor.quillInstance.root.innerHTML : '';
 				
 				// Clean empty paragraphs
 				const cleanHtml = ( html ) => {
@@ -398,8 +470,20 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 				inputTrans.name = 'translation_pairs[' + index + '][translation]';
 				inputTrans.value = cleanHtml( translation );
 				
+				const inputFootnoteOrig = document.createElement( 'input' );
+				inputFootnoteOrig.type = 'hidden';
+				inputFootnoteOrig.name = 'translation_pairs[' + index + '][footnote_original]';
+				inputFootnoteOrig.value = cleanHtml( footnoteOrig );
+				
+				const inputFootnoteTrans = document.createElement( 'input' );
+				inputFootnoteTrans.type = 'hidden';
+				inputFootnoteTrans.name = 'translation_pairs[' + index + '][footnote_translation]';
+				inputFootnoteTrans.value = cleanHtml( footnoteTrans );
+				
 				hiddenInputs.appendChild( inputOrig );
 				hiddenInputs.appendChild( inputTrans );
+				hiddenInputs.appendChild( inputFootnoteOrig );
+				hiddenInputs.appendChild( inputFootnoteTrans );
 			});
 		}
 
@@ -436,6 +520,27 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 						<label style="display: block; margin-bottom: 5px;"><?php _e( 'Translation', 'islamic-scholars' ); ?></label>
 						<div class="quill-wrapper translation-editor">
 							<div class="quill-editor" data-type="translation"></div>
+						</div>
+					</div>
+				</div>
+				<button type="button" class="button add-footnotes-btn">${addFootnotesLabel}</button>
+				<div class="footnotes-section" style="display:none;">
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+						<strong>📝 ${footnotesLabel}</strong>
+						<button type="button" class="button remove-footnotes-btn">${removeFootnotesLabel}</button>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+						<div>
+							<label style="display: block; margin-bottom: 5px;">${footnoteOriginalLabel}</label>
+							<div class="quill-wrapper arabic-editor">
+								<div class="quill-editor" data-type="footnote_original"></div>
+							</div>
+						</div>
+						<div>
+							<label style="display: block; margin-bottom: 5px;">${footnoteTranslationLabel}</label>
+							<div class="quill-wrapper translation-editor">
+								<div class="quill-editor" data-type="footnote_translation"></div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -524,6 +629,35 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 				updatePairNumbers();
 				updateMoveButtons();
 			});
+			
+			// Add footnotes button
+			const addFootnotesBtn = row.querySelector( '.add-footnotes-btn' );
+			const footnotesSection = row.querySelector( '.footnotes-section' );
+			const removeFootnotesBtn = row.querySelector( '.remove-footnotes-btn' );
+			
+			if ( addFootnotesBtn ) {
+				addFootnotesBtn.addEventListener( 'click', function( e ) {
+					e.preventDefault();
+					addFootnotesBtn.style.display = 'none';
+					footnotesSection.style.display = 'block';
+					// Initialize Quill editors in footnotes section
+					footnotesSection.querySelectorAll( '.quill-wrapper' ).forEach( initQuillEditor );
+				});
+			}
+			
+			if ( removeFootnotesBtn ) {
+				removeFootnotesBtn.addEventListener( 'click', function( e ) {
+					e.preventDefault();
+					// Clear footnote editors
+					footnotesSection.querySelectorAll( '.quill-editor' ).forEach( el => {
+						if ( el.quillInstance ) {
+							el.quillInstance.setContents([]);
+						}
+					});
+					footnotesSection.style.display = 'none';
+					addFootnotesBtn.style.display = 'inline-block';
+				});
+			}
 		}
 
 		function clearDragClasses() {
@@ -623,6 +757,8 @@ function islamic_scholars_save_translation_meta( $post_id ) {
 					$pairs[] = array(
 						'original' => wp_kses_post( $pair['original'] ?? '' ),
 						'translation' => wp_kses_post( $pair['translation'] ?? '' ),
+						'footnote_original' => wp_kses_post( $pair['footnote_original'] ?? '' ),
+						'footnote_translation' => wp_kses_post( $pair['footnote_translation'] ?? '' ),
 					);
 				}
 			}
