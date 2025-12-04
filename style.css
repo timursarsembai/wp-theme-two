@@ -95,6 +95,32 @@ p {
   margin-bottom: var(--spacing-md);
 }
 
+/* Images & Figures */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+figure {
+  margin: var(--spacing-lg) 0;
+  max-width: 100%;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+figcaption {
+  margin-top: var(--spacing-xs);
+  font-size: var(--fs-sm);
+  color: var(--color-text-light);
+  text-align: center;
+  font-style: italic;
+}
+
 a {
   color: var(--color-primary-dark);
   text-decoration: none;
