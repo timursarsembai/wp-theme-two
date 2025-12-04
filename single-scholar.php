@@ -75,9 +75,37 @@ get_header(); ?>
 				</div>
 			</header>
 
+			<!-- Audio Lectures -->
+			<?php
+			$audio_files = get_post_meta( get_the_ID(), 'audio_files', true );
+			if ( ! empty( $audio_files ) && is_array( $audio_files ) ) :
+			?>
+				<div class="scholar-audio-section" style="margin-bottom: var(--spacing-2xl);">
+					<h3><?php _e( 'Audio Lectures', 'islamic-scholars' ); ?></h3>
+					<div class="audio-playlist">
+						<?php foreach ( $audio_files as $index => $audio ) : ?>
+							<div class="audio-item" style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: rgba(17, 94, 89, 0.03); border-radius: 4px;">
+								<div class="audio-title" style="font-weight: 500; margin-bottom: var(--spacing-sm); color: var(--color-primary-dark);">
+									<?php echo esc_html( $audio['title'] ?: __( 'Audio', 'islamic-scholars' ) . ' ' . ( $index + 1 ) ); ?>
+								</div>
+								<audio controls preload="metadata" style="width: 100%;">
+									<source src="<?php echo esc_url( $audio['url'] ); ?>" type="audio/mpeg">
+									<?php _e( 'Your browser does not support the audio element.', 'islamic-scholars' ); ?>
+								</audio>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			<?php endif; ?>
+
+			<!-- Biography -->
+			<div class="entry-content">
+				<?php the_content(); ?>
+			</div>
+
 			<!-- Teachers -->
 			<?php if ( ! empty( $teachers ) ) : ?>
-				<div class="scholar-teachers card" style="margin-bottom: var(--spacing-2xl); border-left: 4px solid var(--color-accent-secondary);">
+				<div class="scholar-teachers card" style="margin-bottom: var(--spacing-lg); border-left: 4px solid var(--color-accent-secondary);">
 					<h3><?php _e( 'Teachers (Mentors)', 'islamic-scholars' ); ?></h3>
 					<ul style="list-style: none; display: flex; flex-wrap: wrap; gap: var(--spacing-md);">
 						<?php
@@ -112,34 +140,6 @@ get_header(); ?>
 							</li>
 						<?php endforeach; ?>
 					</ul>
-				</div>
-			<?php endif; ?>
-
-			<!-- Biography -->
-			<div class="entry-content">
-				<?php the_content(); ?>
-			</div>
-
-			<!-- Audio Lectures -->
-			<?php
-			$audio_files = get_post_meta( get_the_ID(), 'audio_files', true );
-			if ( ! empty( $audio_files ) && is_array( $audio_files ) ) :
-			?>
-				<div class="scholar-audio-section" style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--color-border);">
-					<h3><?php _e( 'Audio Lectures', 'islamic-scholars' ); ?></h3>
-					<div class="audio-playlist">
-						<?php foreach ( $audio_files as $index => $audio ) : ?>
-							<div class="audio-item" style="margin-bottom: var(--spacing-md); padding: var(--spacing-md); background: rgba(17, 94, 89, 0.03); border-radius: 4px;">
-								<div class="audio-title" style="font-weight: 500; margin-bottom: var(--spacing-sm); color: var(--color-primary-dark);">
-									<?php echo esc_html( $audio['title'] ?: __( 'Audio', 'islamic-scholars' ) . ' ' . ( $index + 1 ) ); ?>
-								</div>
-								<audio controls preload="metadata" style="width: 100%;">
-									<source src="<?php echo esc_url( $audio['url'] ); ?>" type="audio/mpeg">
-									<?php _e( 'Your browser does not support the audio element.', 'islamic-scholars' ); ?>
-								</audio>
-							</div>
-						<?php endforeach; ?>
-					</div>
 				</div>
 			<?php endif; ?>
 
