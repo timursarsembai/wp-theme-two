@@ -6,7 +6,11 @@
 <div class="card scholar-card" style="margin-bottom: var(--spacing-lg);">
 	<?php if ( has_post_thumbnail() ) : ?>
 		<a href="<?php the_permalink(); ?>" class="post-thumbnail">
-			<?php the_post_thumbnail( 'medium', array( 'style' => 'width: 100%; height: auto; border-radius: 4px; display: block; margin-bottom: var(--spacing-md);' ) ); ?>
+			<?php the_post_thumbnail( 'medium', array( 
+				'style' => 'width: 100%; height: auto; border-radius: 4px; display: block; margin-bottom: var(--spacing-md);',
+				'loading' => 'lazy',
+				'decoding' => 'async',
+			) ); ?>
 		</a>
 	<?php endif; ?>
 

@@ -21,7 +21,11 @@ get_header(); ?>
 
 			<?php if ( has_post_thumbnail() ) : ?>
 				<div style="margin-bottom: var(--spacing-2xl);">
-					<?php the_post_thumbnail( 'large', array( 'style' => 'width: 100%; height: auto; border-radius: 8px;' ) ); ?>
+					<?php the_post_thumbnail( 'large', array( 
+						'style' => 'width: 100%; height: auto; border-radius: 8px;',
+						'fetchpriority' => 'high',
+						'decoding' => 'async',
+					) ); ?>
 				</div>
 			<?php endif; ?>
 

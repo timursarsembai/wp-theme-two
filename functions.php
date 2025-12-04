@@ -134,10 +134,27 @@ function islamic_scholars_add_seo_meta() {
 add_action( 'wp_head', 'islamic_scholars_add_seo_meta', 5 );
 
 /**
+ * Add resource hints for external resources
+ */
+function islamic_scholars_resource_hints( $hints, $relation_type ) {
+	if ( 'preconnect' === $relation_type ) {
+		$hints[] = array(
+			'href' => 'https://fonts.googleapis.com',
+		);
+		$hints[] = array(
+			'href' => 'https://fonts.gstatic.com',
+			'crossorigin' => 'anonymous',
+		);
+	}
+	return $hints;
+}
+add_filter( 'wp_resource_hints', 'islamic_scholars_resource_hints', 10, 2 );
+
+/**
  * Enqueue scripts and styles
  */
 function islamic_scholars_enqueue_assets() {
-	// Fonts
+	// Fonts with display=swap for better performance
 	wp_enqueue_style(
 		'google-fonts',
 		'https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap',
@@ -174,6 +191,66 @@ function islamic_scholars_enqueue_assets() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'islamic_scholars_enqueue_assets' );
+
+/**
+ * Add fetchpriority="high" to LCP images (featured images on singular pages)
+ * and loading="lazy" to other images
+ */
+function islamic_scholars_optimize_images( $attr, $attachment, $size ) {
+	// On singular pages, the featured image should have high priority
+	if ( is_singular() && has_post_thumbnail() ) {
+		$featured_image_id = get_post_thumbnail_id();
+		
+		if ( $attachment->ID === $featured_image_id ) {
+			// LCP image - high priority, no lazy loading
+			$attr['fetchpriority'] = 'high';
+			$attr['decoding'] = 'async';
+			unset( $attr['loading'] ); // Remove lazy loading for LCP
+			return $attr;
+		}
+	}
+	
+	// All other images - lazy loading
+	$attr['loading'] = 'lazy';
+	$attr['decoding'] = 'async';
+	
+	return $attr;
+}
+add_filter( 'wp_get_attachment_image_attributes', 'islamic_scholars_optimize_images', 10, 3 );
+
+/**
+ * Add loading="lazy" to content images
+ */
+function islamic_scholars_lazy_load_content_images( $content ) {
+	if ( is_admin() || is_feed() || is_preview() ) {
+		return $content;
+	}
+	
+	// Add loading="lazy" to images that don't have it
+	$content = preg_replace_callback(
+		'/<img([^>]+)>/i',
+		function( $matches ) {
+			$img = $matches[0];
+			
+			// Skip if already has loading attribute
+			if ( strpos( $img, 'loading=' ) !== false ) {
+				return $img;
+			}
+			
+			// Skip if has fetchpriority (LCP image)
+			if ( strpos( $img, 'fetchpriority=' ) !== false ) {
+				return $img;
+			}
+			
+			// Add lazy loading
+			return str_replace( '<img', '<img loading="lazy" decoding="async"', $img );
+		},
+		$content
+	);
+	
+	return $content;
+}
+add_filter( 'the_content', 'islamic_scholars_lazy_load_content_images' );
 
 /**
  * Register widget areas

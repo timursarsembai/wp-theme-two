@@ -30,7 +30,11 @@ get_header(); ?>
 			<header class="entry-header" style="display: grid; grid-template-columns: auto 1fr; gap: var(--spacing-lg); align-items: start; margin-bottom: var(--spacing-2xl);">
 				<?php if ( has_post_thumbnail() ) : ?>
 					<div style="max-width: 200px;">
-						<?php the_post_thumbnail( 'medium', array( 'style' => 'width: 100%; height: auto; border-radius: 8px;' ) ); ?>
+						<?php the_post_thumbnail( 'medium', array( 
+							'style' => 'width: 100%; height: auto; border-radius: 8px;',
+							'fetchpriority' => 'high',
+							'decoding' => 'async',
+						) ); ?>
 					</div>
 				<?php endif; ?>
 
