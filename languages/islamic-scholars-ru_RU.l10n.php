@@ -71,6 +71,7 @@ return array(
             '-- Select Scholar --' => array('-- Выберите учёного --'),
             'Translator Name' => array('Имя переводчика'),
             'Source/Book' => array('Источник/Книга'),
+            'Source URL' => array('URL источника'),
             
             // Template functions
             'Original' => array('Оригинал'),
@@ -198,6 +199,7 @@ return array(
             
             // Pagination
             'Page %1$s of %2$s' => array('Страница %1$s из %2$s'),
+            'Page' => array('Страница'),
             'Previous' => array('Назад'),
             'Next' => array('Далее'),
             
@@ -374,6 +376,7 @@ return array(
         
         // Pagination
         'Page %1$s of %2$s' => 'Страница %1$s из %2$s',
+        'Page' => 'Страница',
         'Previous' => 'Назад',
         'Next' => 'Далее',
         

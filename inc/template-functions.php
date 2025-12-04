@@ -37,7 +37,7 @@ function the_translation_pairs( $post_id = null ) {
 	$footnote_label = __( 'Footnote', 'islamic-scholars' );
 	$copy_link_label = __( 'Copy link', 'islamic-scholars' );
 	$link_copied_label = __( 'Link copied!', 'islamic-scholars' );
-	$pair_label = __( 'Pair', 'islamic-scholars' );
+	$page_label = __( 'Page', 'islamic-scholars' );
 	$of_label = __( 'of', 'islamic-scholars' );
 	$share_label = __( 'Share', 'islamic-scholars' );
 	?>
@@ -113,7 +113,7 @@ function the_translation_pairs( $post_id = null ) {
 				<span aria-hidden="true">←</span>
 			</button>
 			<span class="pagination-info">
-				<?php echo $pair_label; ?> <span class="current-mobile-pair">1</span> <?php echo $of_label; ?> <span class="total-mobile-pairs"><?php echo $total_pairs; ?></span>
+				<?php echo $page_label; ?> <span class="current-mobile-pair">1</span> <?php echo $of_label; ?> <span class="total-mobile-pairs"><?php echo $total_pairs; ?></span>
 			</span>
 			<button type="button" class="pagination-btn mobile-next"<?php echo $total_pairs <= 1 ? ' disabled' : ''; ?>>
 				<span aria-hidden="true">→</span>
@@ -214,10 +214,27 @@ function the_translation_pairs( $post_id = null ) {
 				}
 			}
 			
-			// Initialize mode
+			// Initialize mode - check hash first
 			function initMode() {
+				const hash = window.location.hash;
+				let initialPair = 1;
+				
+				// Check if URL has pair hash
+				if (hash && hash.startsWith('#pair-')) {
+					const pairNum = parseInt(hash.replace('#pair-', ''));
+					if (pairNum >= 1 && pairNum <= pairs.length) {
+						initialPair = pairNum;
+						currentMobilePair = pairNum;
+					}
+				}
+				
 				if (isMobile) {
-					showMobilePair(1, false);
+					showMobilePair(initialPair, false);
+				} else if (hasPagination) {
+					const page = Math.floor((initialPair - 1) / pairsPerPage) + 1;
+					if (page > 1) {
+						showPage(page, false);
+					}
 				}
 			}
 			

@@ -870,6 +870,7 @@ function islamic_scholars_translation_metadata_callback( $post ) {
 	
 	$scholar_id = get_post_meta( $post->ID, 'scholar_id', true );
 	$source = get_post_meta( $post->ID, 'source', true );
+	$source_url = get_post_meta( $post->ID, 'source_url', true );
 
 	$scholars = get_posts( array(
 		'post_type' => 'scholar',
@@ -894,6 +895,11 @@ function islamic_scholars_translation_metadata_callback( $post ) {
 		<p>
 			<label for="source"><?php _e( 'Source/Book', 'islamic-scholars' ); ?></label><br>
 			<input type="text" id="source" name="source" value="<?php echo esc_attr( $source ); ?>" placeholder="e.g., Sahih Bukhari" style="width: 100%; padding: 8px;">
+		</p>
+
+		<p>
+			<label for="source_url"><?php _e( 'Source URL', 'islamic-scholars' ); ?></label><br>
+			<input type="url" id="source_url" name="source_url" value="<?php echo esc_url( $source_url ); ?>" placeholder="https://..." style="width: 100%; padding: 8px;">
 		</p>
 	</div>
 	<?php
@@ -945,6 +951,9 @@ function islamic_scholars_save_translation_meta( $post_id ) {
 		}
 		if ( isset( $_POST['source'] ) ) {
 			update_post_meta( $post_id, 'source', sanitize_text_field( $_POST['source'] ) );
+		}
+		if ( isset( $_POST['source_url'] ) ) {
+			update_post_meta( $post_id, 'source_url', esc_url_raw( $_POST['source_url'] ) );
 		}
 	}
 }

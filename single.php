@@ -47,6 +47,7 @@ get_header(); ?>
 			<?php
 			$scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
 			$source = get_post_meta( get_the_ID(), 'source', true );
+			$source_url = get_post_meta( get_the_ID(), 'source_url', true );
 			
 			if ( $scholar_id || $source ) :
 				?>
@@ -56,7 +57,13 @@ get_header(); ?>
 						<p><strong><?php _e( 'Scholar:', 'islamic-scholars' ); ?></strong> <a href="<?php echo esc_url( get_permalink( $scholar_id ) ); ?>"><?php echo esc_html( get_the_title( $scholar_id ) ); ?></a></p>
 					<?php endif; ?>
 					<?php if ( $source ) : ?>
-						<p><strong><?php _e( 'Source:', 'islamic-scholars' ); ?></strong> <?php echo esc_html( $source ); ?></p>
+						<p><strong><?php _e( 'Source:', 'islamic-scholars' ); ?></strong> 
+						<?php if ( $source_url ) : ?>
+							<a href="<?php echo esc_url( $source_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $source ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $source ); ?>
+						<?php endif; ?>
+						</p>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>
