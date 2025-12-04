@@ -23,6 +23,10 @@ function get_translation_pairs( $post_id = null ) {
  * Display translation pairs with pagination and footnotes
  */
 function the_translation_pairs( $post_id = null ) {
+	if ( ! $post_id ) {
+		$post_id = get_the_ID();
+	}
+	
 	$pairs = get_translation_pairs( $post_id );
 	
 	if ( empty( $pairs ) ) {
@@ -30,6 +34,7 @@ function the_translation_pairs( $post_id = null ) {
 	}
 	
 	$pairs_per_page = 20;
+	$mobile_preload = 3; // Preload first 3 pairs on mobile, rest via AJAX
 	$total_pairs = count( $pairs );
 	$total_pages = ceil( $total_pairs / $pairs_per_page );
 	$has_pagination = $total_pairs > $pairs_per_page;
@@ -40,8 +45,14 @@ function the_translation_pairs( $post_id = null ) {
 	$page_label = __( 'Page', 'islamic-scholars' );
 	$of_label = __( 'of', 'islamic-scholars' );
 	$share_label = __( 'Share', 'islamic-scholars' );
+	$loading_label = __( 'Loading...', 'islamic-scholars' );
 	?>
-	<div class="translation-pairs-container" data-pairs-per-page="<?php echo $pairs_per_page; ?>" data-total-pairs="<?php echo $total_pairs; ?>">
+	<div class="translation-pairs-container" 
+		 data-pairs-per-page="<?php echo $pairs_per_page; ?>" 
+		 data-total-pairs="<?php echo $total_pairs; ?>"
+		 data-post-id="<?php echo $post_id; ?>"
+		 data-api-url="<?php echo esc_url( rest_url( 'islamic-scholars/v1/pairs/' . $post_id ) ); ?>"
+		 data-mobile-preload="<?php echo $mobile_preload; ?>">
 		<div class="translation-pairs">
 			<?php foreach ( $pairs as $index => $pair ) : 
 				$has_footnote = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
@@ -125,14 +136,26 @@ function the_translation_pairs( $post_id = null ) {
 		(function() {
 			const container = document.querySelector('.translation-pairs-container');
 			const pairsContainer = container.querySelector('.translation-pairs');
-			const pairs = container.querySelectorAll('.translation-pair');
+			let pairs = Array.from(container.querySelectorAll('.translation-pair'));
 			const pairsPerPage = <?php echo $pairs_per_page; ?>;
 			const totalPages = <?php echo $total_pages; ?>;
 			const totalPairs = <?php echo $total_pairs; ?>;
 			const hasPagination = <?php echo $has_pagination ? 'true' : 'false'; ?>;
+			const apiUrl = container.dataset.apiUrl;
+			const mobilePreload = parseInt(container.dataset.mobilePreload) || 3;
+			
 			let currentPage = 1;
 			let currentMobilePair = 1;
 			let isMobile = window.innerWidth <= 768;
+			
+			// AJAX loading state
+			const loadedPairs = new Set();
+			let isLoading = false;
+			
+			// Mark initially loaded pairs
+			pairs.forEach((pair, index) => {
+				loadedPairs.add(index + 1);
+			});
 			
 			// Desktop pagination elements
 			const prevBtn = container.querySelector('.pagination-prev');
@@ -146,6 +169,68 @@ function the_translation_pairs( $post_id = null ) {
 			
 			const copyLinkLabel = <?php echo json_encode( $copy_link_label ); ?>;
 			const linkCopiedLabel = <?php echo json_encode( $link_copied_label ); ?>;
+			const loadingLabel = <?php echo json_encode( $loading_label ); ?>;
+			
+			// Load pair via AJAX
+			async function loadPairAjax(pairNum) {
+				if (loadedPairs.has(pairNum) || isLoading) return true;
+				
+				isLoading = true;
+				
+				try {
+					const response = await fetch(`${apiUrl}?start=${pairNum - 1}&count=1`);
+					const data = await response.json();
+					
+					if (data.success && data.pairs && data.pairs.length > 0) {
+						// Insert the pair HTML
+						const tempDiv = document.createElement('div');
+						tempDiv.innerHTML = data.pairs[0];
+						const newPair = tempDiv.firstElementChild;
+						
+						// Find correct position to insert
+						let insertBefore = null;
+						for (const pair of pairsContainer.children) {
+							const pairId = parseInt(pair.dataset.pairId) + 1;
+							if (pairId > pairNum) {
+								insertBefore = pair;
+								break;
+							}
+						}
+						
+						if (insertBefore) {
+							pairsContainer.insertBefore(newPair, insertBefore);
+						} else {
+							pairsContainer.appendChild(newPair);
+						}
+						
+						// Update pairs array
+						pairs = Array.from(container.querySelectorAll('.translation-pair'));
+						loadedPairs.add(pairNum);
+						
+						// Bind events to new pair
+						bindPairEvents(newPair);
+						
+						isLoading = false;
+						return true;
+					}
+				} catch (error) {
+					console.error('Error loading pair:', error);
+				}
+				
+				isLoading = false;
+				return false;
+			}
+			
+			// Preload adjacent pairs for smooth navigation
+			function preloadAdjacentPairs(currentPairNum) {
+				// Preload prev and next pairs
+				if (currentPairNum > 1 && !loadedPairs.has(currentPairNum - 1)) {
+					loadPairAjax(currentPairNum - 1);
+				}
+				if (currentPairNum < totalPairs && !loadedPairs.has(currentPairNum + 1)) {
+					loadPairAjax(currentPairNum + 1);
+				}
+			}
 			
 			// Desktop: show page of pairs
 			function showPage(page, scroll = true) {
@@ -170,18 +255,96 @@ function the_translation_pairs( $post_id = null ) {
 				}
 			}
 			
-			// Mobile: show single pair
-			function showMobilePair(pairNum, scroll = false) {
+			// Mobile: show single pair with animation
+			let isAnimating = false;
+			
+			// Find pair element by pairNum
+			function findPairByNum(pairNum) {
+				return container.querySelector(`.translation-pair[data-pair-id="${pairNum - 1}"]`);
+			}
+			
+			// Show loading state
+			function showLoading(show) {
+				let loader = container.querySelector('.pair-loader');
+				if (show) {
+					if (!loader) {
+						loader = document.createElement('div');
+						loader.className = 'pair-loader';
+						loader.innerHTML = `<span>${loadingLabel}</span>`;
+						pairsContainer.appendChild(loader);
+					}
+					loader.style.display = 'flex';
+				} else if (loader) {
+					loader.style.display = 'none';
+				}
+			}
+			
+			async function showMobilePair(pairNum, scroll = false, direction = null) {
+				if (isAnimating) return;
+				
+				const oldPair = currentMobilePair;
+				
+				// Check if pair needs to be loaded
+				if (!loadedPairs.has(pairNum)) {
+					isAnimating = true;
+					showLoading(true);
+					
+					const loaded = await loadPairAjax(pairNum);
+					showLoading(false);
+					
+					if (!loaded) {
+						isAnimating = false;
+						return;
+					}
+				}
+				
 				currentMobilePair = pairNum;
-				pairs.forEach((pair, index) => {
-					if (index + 1 === pairNum) {
-						pair.classList.remove('hidden-pair');
-						pair.classList.add('mobile-active');
-					} else {
+				
+				// Determine animation direction
+				if (direction === null) {
+					direction = pairNum > oldPair ? 'left' : 'right';
+				}
+				
+				const newPair = findPairByNum(pairNum);
+				const oldPairEl = findPairByNum(oldPair);
+				
+				// Hide all pairs first except old and new
+				pairs.forEach(pair => {
+					const pairId = parseInt(pair.dataset.pairId) + 1;
+					if (pairId !== pairNum && pairId !== oldPair) {
 						pair.classList.add('hidden-pair');
 						pair.classList.remove('mobile-active');
 					}
 				});
+				
+				// Animate new pair in
+				if (newPair) {
+					newPair.classList.remove('hidden-pair');
+					newPair.classList.add('mobile-active');
+					
+					if (oldPair !== pairNum) {
+						isAnimating = true;
+						newPair.classList.add('slide-in-' + direction);
+						
+						setTimeout(() => {
+							newPair.classList.remove('slide-in-' + direction);
+							isAnimating = false;
+							// Preload adjacent pairs after animation
+							preloadAdjacentPairs(pairNum);
+						}, 300);
+					}
+				}
+				
+				// Animate old pair out
+				if (oldPairEl && oldPair !== pairNum) {
+					oldPairEl.classList.add('slide-out-' + direction);
+					oldPairEl.classList.remove('mobile-active');
+					
+					setTimeout(() => {
+						oldPairEl.classList.add('hidden-pair');
+						oldPairEl.classList.remove('slide-out-' + direction);
+					}, 300);
+				}
 				
 				if (currentMobilePairEl) {
 					currentMobilePairEl.textContent = pairNum;
@@ -215,21 +378,21 @@ function the_translation_pairs( $post_id = null ) {
 			}
 			
 			// Initialize mode - check hash first
-			function initMode() {
+			async function initMode() {
 				const hash = window.location.hash;
 				let initialPair = 1;
 				
 				// Check if URL has pair hash
 				if (hash && hash.startsWith('#pair-')) {
 					const pairNum = parseInt(hash.replace('#pair-', ''));
-					if (pairNum >= 1 && pairNum <= pairs.length) {
+					if (pairNum >= 1 && pairNum <= totalPairs) {
 						initialPair = pairNum;
 						currentMobilePair = pairNum;
 					}
 				}
 				
 				if (isMobile) {
-					showMobilePair(initialPair, false);
+					await showMobilePair(initialPair, false);
 				} else if (hasPagination) {
 					const page = Math.floor((initialPair - 1) / pairsPerPage) + 1;
 					if (page > 1) {
@@ -252,11 +415,11 @@ function the_translation_pairs( $post_id = null ) {
 			// Mobile pagination handlers
 			if (mobilePrevBtn && mobileNextBtn) {
 				mobilePrevBtn.addEventListener('click', () => {
-					if (currentMobilePair > 1) showMobilePair(currentMobilePair - 1, true);
+					if (currentMobilePair > 1 && !isAnimating) showMobilePair(currentMobilePair - 1, false, 'right');
 				});
 				
 				mobileNextBtn.addEventListener('click', () => {
-					if (currentMobilePair < totalPairs) showMobilePair(currentMobilePair + 1, true);
+					if (currentMobilePair < totalPairs && !isAnimating) showMobilePair(currentMobilePair + 1, false, 'left');
 				});
 			}
 			
@@ -270,7 +433,7 @@ function the_translation_pairs( $post_id = null ) {
 			}, { passive: true });
 			
 			pairsContainer.addEventListener('touchend', (e) => {
-				if (!isMobile) return;
+				if (!isMobile || isAnimating) return;
 				
 				touchEndX = e.changedTouches[0].screenX;
 				const swipeDistance = touchEndX - touchStartX;
@@ -278,10 +441,10 @@ function the_translation_pairs( $post_id = null ) {
 				if (Math.abs(swipeDistance) > swipeThreshold) {
 					if (swipeDistance < 0 && currentMobilePair < totalPairs) {
 						// Swipe left - next pair
-						showMobilePair(currentMobilePair + 1, false);
+						showMobilePair(currentMobilePair + 1, false, 'left');
 					} else if (swipeDistance > 0 && currentMobilePair > 1) {
 						// Swipe right - previous pair
-						showMobilePair(currentMobilePair - 1, false);
+						showMobilePair(currentMobilePair - 1, false, 'right');
 					}
 				}
 			}, { passive: true });
@@ -356,14 +519,65 @@ function the_translation_pairs( $post_id = null ) {
 				});
 			}
 			
+			// Bind events to a single pair element (used for AJAX-loaded pairs)
+			function bindPairEvents(pair) {
+				const pairLink = pair.querySelector('.pair-number');
+				const shareBtn = pair.querySelector('.pair-share-btn');
+				
+				if (pairLink) {
+					pairLink.addEventListener('click', function(e) {
+						e.preventDefault();
+						const pairNum = parseInt(this.dataset.pair);
+						const hash = '#pair-' + pairNum;
+						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + hash;
+						
+						history.pushState(null, '', hash);
+						
+						if (!isMobile) {
+							const targetPair = document.getElementById('pair-' + pairNum);
+							if (targetPair) {
+								targetPair.scrollIntoView({ behavior: 'smooth', block: 'center' });
+								targetPair.classList.add('pair-highlight');
+								setTimeout(() => targetPair.classList.remove('pair-highlight'), 2000);
+							}
+						}
+						
+						navigator.clipboard.writeText(shareUrl).then(() => {
+							this.classList.add('copied');
+							this.title = linkCopiedLabel;
+							setTimeout(() => {
+								this.classList.remove('copied');
+								this.title = copyLinkLabel;
+							}, 2000);
+						});
+					});
+				}
+				
+				if (shareBtn) {
+					shareBtn.addEventListener('click', function(e) {
+						e.preventDefault();
+						const pairNum = parseInt(this.dataset.pair);
+						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
+						const pageTitle = document.title;
+						const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+						
+						if (navigator.share) {
+							navigator.share({ title: shareTitle, url: shareUrl }).catch(() => copyToClipboard(shareUrl, this));
+						} else {
+							copyToClipboard(shareUrl, this);
+						}
+					});
+				}
+			}
+			
 			// Handle hash on page load - navigate to correct page/pair
-			function handleHash() {
+			async function handleHash() {
 				const hash = window.location.hash;
 				if (hash && hash.startsWith('#pair-')) {
 					const pairNum = parseInt(hash.replace('#pair-', ''));
-					if (pairNum >= 1 && pairNum <= pairs.length) {
+					if (pairNum >= 1 && pairNum <= totalPairs) {
 						if (isMobile) {
-							showMobilePair(pairNum, false);
+							await showMobilePair(pairNum, false);
 							setTimeout(() => {
 								const targetPair = document.getElementById('pair-' + pairNum);
 								if (targetPair) {

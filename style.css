@@ -534,6 +534,11 @@ body.menu-open {
   /* Mobile single pair view */
   .translation-pairs-container {
     position: relative;
+    overflow: hidden;
+  }
+  
+  .translation-pairs {
+    position: relative;
   }
   
   .translation-pair.mobile-active {
@@ -545,6 +550,107 @@ body.menu-open {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+  }
+  
+  /* Slide animations */
+  .translation-pair.slide-in-left {
+    animation: slideInLeft 0.3s ease-out forwards;
+  }
+  
+  .translation-pair.slide-in-right {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+  
+  .translation-pair.slide-out-left {
+    animation: slideOutLeft 0.3s ease-out forwards;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  .translation-pair.slide-out-right {
+    animation: slideOutRight 0.3s ease-out forwards;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOutLeft {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+  
+  /* AJAX loading state */
+  .pair-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    color: var(--color-text-light);
+    font-size: var(--fs-md);
+  }
+  
+  .pair-loader span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .pair-loader span::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 

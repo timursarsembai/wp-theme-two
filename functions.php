@@ -774,3 +774,122 @@ function islamic_scholars_debug_page() {
 }
 add_action( 'wp', 'islamic_scholars_debug_page' );
 
+/**
+ * REST API endpoint for loading translation pairs via AJAX
+ */
+function islamic_scholars_register_pairs_api() {
+	register_rest_route( 'islamic-scholars/v1', '/pairs/(?P<post_id>\d+)', array(
+		'methods'  => 'GET',
+		'callback' => 'islamic_scholars_get_pairs_ajax',
+		'permission_callback' => '__return_true',
+		'args'     => array(
+			'post_id' => array(
+				'required'          => true,
+				'validate_callback' => function( $param ) {
+					return is_numeric( $param );
+				},
+			),
+			'start' => array(
+				'default'           => 0,
+				'validate_callback' => function( $param ) {
+					return is_numeric( $param );
+				},
+			),
+			'count' => array(
+				'default'           => 5,
+				'validate_callback' => function( $param ) {
+					return is_numeric( $param ) && $param > 0 && $param <= 20;
+				},
+			),
+		),
+	) );
+}
+add_action( 'rest_api_init', 'islamic_scholars_register_pairs_api' );
+
+/**
+ * REST API callback for pairs
+ */
+function islamic_scholars_get_pairs_ajax( $request ) {
+	$post_id = intval( $request['post_id'] );
+	$start = intval( $request['start'] );
+	$count = intval( $request['count'] );
+	
+	$all_pairs = get_post_meta( $post_id, 'translation_pairs', true );
+	
+	if ( ! is_array( $all_pairs ) ) {
+		return new WP_REST_Response( array(
+			'success' => false,
+			'message' => 'No pairs found',
+		), 404 );
+	}
+	
+	$total = count( $all_pairs );
+	$pairs_slice = array_slice( $all_pairs, $start, $count );
+	
+	// Render HTML for each pair
+	$html_pairs = array();
+	foreach ( $pairs_slice as $index => $pair ) {
+		$pair_number = $start + $index + 1;
+		$html_pairs[] = islamic_scholars_render_pair_html( $pair, $pair_number );
+	}
+	
+	return new WP_REST_Response( array(
+		'success'    => true,
+		'pairs'      => $html_pairs,
+		'total'      => $total,
+		'start'      => $start,
+		'count'      => count( $pairs_slice ),
+		'hasMore'    => ( $start + $count ) < $total,
+	), 200 );
+}
+
+/**
+ * Render single pair HTML
+ */
+function islamic_scholars_render_pair_html( $pair, $pair_number ) {
+	$copy_link_label = __( 'Copy link', 'islamic-scholars' );
+	$share_label = __( 'Share', 'islamic-scholars' );
+	
+	// Clean translation text
+	$translation_text = $pair['translation'] ?? '';
+	$translation_text = preg_replace( '/<p>\s*<br\s*\/?>\s*<\/p>/i', '', $translation_text );
+	
+	ob_start();
+	?>
+	<div class="translation-pair" id="pair-<?php echo $pair_number; ?>" data-pair-id="<?php echo $pair_number - 1; ?>">
+		<div class="pair-number-wrapper">
+			<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">#<?php echo $pair_number; ?></a>
+			<button type="button" class="pair-share-btn" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $share_label ); ?>">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+			</button>
+		</div>
+		<div class="translation-pair-content">
+			<div class="translation-pair-original" dir="rtl">
+				<div class="arabic-text">
+					<?php echo wp_kses_post( $pair['original'] ?? '' ); ?>
+				</div>
+				<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
+					<div class="pair-footnote pair-footnote-original">
+						<div class="footnote-content">
+							<?php echo wp_kses_post( $pair['footnote_original'] ); ?>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
+			<div class="translation-pair-translation">
+				<div>
+					<?php echo wp_kses_post( $translation_text ); ?>
+				</div>
+				<?php if ( ! empty( $pair['footnote_translation'] ) ) : ?>
+					<div class="pair-footnote pair-footnote-translation">
+						<div class="footnote-content">
+							<?php echo wp_kses_post( $pair['footnote_translation'] ); ?>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
