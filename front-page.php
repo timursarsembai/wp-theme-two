@@ -12,7 +12,7 @@ get_header(); ?>
 	$tafsir_cat = get_category_by_slug( 'tafsir' );
 	$tafsir_posts = new WP_Query( array(
 		'post_type'      => 'post',
-		'posts_per_page' => 10,
+		'posts_per_page' => 6,
 		'category_name'  => 'tafsir',
 	) );
 
@@ -41,7 +41,7 @@ get_header(); ?>
 	$hadith_cat = get_category_by_slug( 'hadith' );
 	$hadith_posts = new WP_Query( array(
 		'post_type'      => 'post',
-		'posts_per_page' => 10,
+		'posts_per_page' => 6,
 		'category_name'  => 'hadith',
 	) );
 
@@ -70,7 +70,7 @@ get_header(); ?>
 	$fatawa_cat = get_category_by_slug( 'fatawa' );
 	$fatawa_posts = new WP_Query( array(
 		'post_type'      => 'post',
-		'posts_per_page' => 10,
+		'posts_per_page' => 6,
 		'category_name'  => 'fatawa',
 	) );
 
@@ -99,7 +99,7 @@ get_header(); ?>
 	$books_cat = get_category_by_slug( 'books' );
 	$books_posts = new WP_Query( array(
 		'post_type'      => 'post',
-		'posts_per_page' => 10,
+		'posts_per_page' => 6,
 		'category_name'  => 'books',
 	) );
 

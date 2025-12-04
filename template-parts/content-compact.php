@@ -22,6 +22,12 @@
 			?>
 		</div>
 
+		<?php if ( has_excerpt() || get_the_content() ) : ?>
+			<div class="card-excerpt" style="margin-bottom: var(--spacing-md); color: var(--color-text-light); font-size: var(--fs-sm); line-height: 1.6;">
+				<?php echo wp_trim_words( get_the_excerpt() ?: get_the_content(), 20, '...' ); ?>
+			</div>
+		<?php endif; ?>
+
 		<a href="<?php the_permalink(); ?>" style="color: var(--color-primary-dark); font-weight: 600; font-size: var(--fs-sm); display: inline-block;">
 			<?php _e( 'Read more →', 'islamic-scholars' ); ?>
 		</a>

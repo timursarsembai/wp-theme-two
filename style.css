@@ -756,6 +756,12 @@ body.menu-open {
   border-top-right-radius: 0;
 }
 
+/* Comment form submit button */
+.form-submit .submit {
+  padding: var(--spacing-sm) var(--spacing-md);
+  height: auto;
+}
+
 /* Utility classes */
 .sr-only {
   position: absolute;

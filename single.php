@@ -29,10 +29,6 @@ get_header(); ?>
 				</div>
 			<?php endif; ?>
 
-			<div class="entry-content">
-				<?php the_content(); ?>
-			</div>
-
 			<!-- Translation pairs (if this is a translation post) -->
 			<?php
 			$pairs = get_translation_pairs( get_the_ID() );
