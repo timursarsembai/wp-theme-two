@@ -86,14 +86,14 @@ get_header(); ?>
 					</h3>
 
 					<?php
-					if ( $post_type === 'translation' ) :
+					if ( $post_type === 'translation' ) {
 						$scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
 						if ( $scholar_id ) {
 							echo '<p style="color: var(--color-text-light); font-size: var(--fs-sm); margin-bottom: var(--spacing-md);">';
 							printf( __( 'By %s', 'islamic-scholars' ), '<strong>' . esc_html( get_the_title( $scholar_id ) ) . '</strong>' );
 							echo '</p>';
 						}
-					elseif ( $post_type === 'scholar' ) :
+					} elseif ( $post_type === 'scholar' ) {
 						$birth_year = intval( get_post_meta( get_the_ID(), 'birth_year', true ) );
 						$death_year = intval( get_post_meta( get_the_ID(), 'death_year', true ) );
 						if ( $birth_year && $death_year ) {
@@ -101,7 +101,7 @@ get_header(); ?>
 							printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
 							echo '</p>';
 						}
-					endif;
+					}
 					?>
 
 					<p class="card-meta" style="color: var(--color-text-light);">
