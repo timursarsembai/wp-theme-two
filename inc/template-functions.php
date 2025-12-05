@@ -487,36 +487,84 @@ function the_translation_pairs( $post_id = null ) {
 			
 			// Share button functionality (native share or copy)
 			container.querySelectorAll('.pair-share-btn').forEach(btn => {
-				btn.addEventListener('click', function(e) {
+				btn.addEventListener('click', async function(e) {
 					e.preventDefault();
+					e.stopPropagation();
+					
 					const pairNum = parseInt(this.dataset.pair);
 					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
 					const pageTitle = document.title;
 					const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+					const btn = this;
 					
 					// Try native share API first (mobile)
-					if (navigator.share) {
-						navigator.share({
-							title: shareTitle,
-							url: shareUrl
-						}).catch(() => {
+					if (navigator.share && navigator.canShare && navigator.canShare({ url: shareUrl })) {
+						try {
+							await navigator.share({
+								title: shareTitle,
+								url: shareUrl
+							});
+						} catch (err) {
 							// User cancelled or error - fallback to copy
-							copyToClipboard(shareUrl, this);
-						});
+							if (err.name !== 'AbortError') {
+								copyToClipboard(shareUrl, btn);
+							}
+						}
+					} else if (navigator.share) {
+						// Fallback for browsers without canShare
+						try {
+							await navigator.share({
+								title: shareTitle,
+								url: shareUrl
+							});
+						} catch (err) {
+							if (err.name !== 'AbortError') {
+								copyToClipboard(shareUrl, btn);
+							}
+						}
 					} else {
-						// Fallback: copy to clipboard
-						copyToClipboard(shareUrl, this);
+						// No share API - copy to clipboard
+						copyToClipboard(shareUrl, btn);
 					}
 				});
 			});
 			
 			function copyToClipboard(url, element) {
-				navigator.clipboard.writeText(url).then(() => {
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(url).then(() => {
+						element.classList.add('copied');
+						setTimeout(() => {
+							element.classList.remove('copied');
+						}, 2000);
+					}).catch(() => {
+						// Fallback for clipboard API failure
+						fallbackCopyToClipboard(url, element);
+					});
+				} else {
+					fallbackCopyToClipboard(url, element);
+				}
+			}
+			
+			function fallbackCopyToClipboard(url, element) {
+				// Create temporary textarea for older browsers
+				const textArea = document.createElement('textarea');
+				textArea.value = url;
+				textArea.style.position = 'fixed';
+				textArea.style.left = '-999999px';
+				textArea.style.top = '-999999px';
+				document.body.appendChild(textArea);
+				textArea.focus();
+				textArea.select();
+				try {
+					document.execCommand('copy');
 					element.classList.add('copied');
 					setTimeout(() => {
 						element.classList.remove('copied');
 					}, 2000);
-				});
+				} catch (err) {
+					console.error('Copy failed:', err);
+				}
+				document.body.removeChild(textArea);
 			}
 			
 			// Bind events to a single pair element (used for AJAX-loaded pairs)
@@ -554,17 +602,26 @@ function the_translation_pairs( $post_id = null ) {
 				}
 				
 				if (shareBtn) {
-					shareBtn.addEventListener('click', function(e) {
+					shareBtn.addEventListener('click', async function(e) {
 						e.preventDefault();
+						e.stopPropagation();
+						
 						const pairNum = parseInt(this.dataset.pair);
 						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
 						const pageTitle = document.title;
 						const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+						const btn = this;
 						
 						if (navigator.share) {
-							navigator.share({ title: shareTitle, url: shareUrl }).catch(() => copyToClipboard(shareUrl, this));
+							try {
+								await navigator.share({ title: shareTitle, url: shareUrl });
+							} catch (err) {
+								if (err.name !== 'AbortError') {
+									copyToClipboard(shareUrl, btn);
+								}
+							}
 						} else {
-							copyToClipboard(shareUrl, this);
+							copyToClipboard(shareUrl, btn);
 						}
 					});
 				}
