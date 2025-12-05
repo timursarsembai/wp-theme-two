@@ -595,14 +595,9 @@ add_action( 'wp_ajax_nopriv_islamic_scholars_filter_scholars', 'islamic_scholars
  */
 function islamic_scholars_modify_search_query( $query ) {
 	if ( ! is_admin() && $query->is_main_query() && $query->is_search() ) {
-		// Handle post type filter
-		if ( isset( $_GET['post_type'] ) && ! empty( $_GET['post_type'] ) ) {
-			$post_type = sanitize_text_field( $_GET['post_type'] );
-			$query->set( 'post_type', $post_type );
-		} else {
-			// Search in both posts and scholars by default
-			$query->set( 'post_type', array( 'post', 'scholar' ) );
-		}
+		// Always search in both posts and scholars
+		// Ignore post_type parameter from URL to ensure consistent search
+		$query->set( 'post_type', array( 'post', 'scholar' ) );
 		
 		// Handle century filter for scholars
 		if ( isset( $_GET['centuries'] ) && ! empty( $_GET['centuries'] ) ) {

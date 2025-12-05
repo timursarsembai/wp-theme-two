@@ -20,6 +20,9 @@ return array(
             'Read more' => array('Читать далее'),
             'Read more →' => array('Читать далее →'),
             'Search results for' => array('Результаты поиска для'),
+            'Search results for: %s' => array('Результаты поиска: %s'),
+            'Found %d result' => array('Найден %d результат', 'Найдено %d результата', 'Найдено %d результатов'),
+            'No results found. Please try a different search.' => array('Ничего не найдено. Попробуйте другой запрос.'),
             
             // Scholar
             'Century:' => array('Век:'),
@@ -218,6 +221,9 @@ return array(
         'Read more' => 'Читать далее',
         'Read more →' => 'Читать далее →',
         'Search results for' => 'Результаты поиска для',
+        'Search results for: %s' => 'Результаты поиска: %s',
+        'Found %d result' => 'Найден %d результат',
+        'No results found. Please try a different search.' => 'Ничего не найдено. Попробуйте другой запрос.',
         'Century:' => 'Век:',
         'Teachers:' => 'Учителя:',
         'Students:' => 'Ученики:',

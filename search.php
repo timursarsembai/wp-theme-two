@@ -1,6 +1,6 @@
 <?php
 /**
- * Search results template with post type filtering
+ * Search results template
  */
 
 get_header(); ?>
@@ -8,58 +8,18 @@ get_header(); ?>
 <main class="site-content container">
 	<header class="entry-header" style="margin-bottom: var(--spacing-2xl);">
 		<h1 class="entry-title">
-			<?php printf( __( 'Search results for: %s', 'islamic-scholars' ), get_search_query() ); ?>
+			<?php printf( __( 'Search results for: %s', 'islamic-scholars' ), '<em>' . get_search_query() . '</em>' ); ?>
 		</h1>
 	</header>
-
-	<!-- Search filters -->
-	<div class="search-filters card" style="margin-bottom: var(--spacing-2xl); padding: var(--spacing-lg);">
-		<form method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" style="display: flex; flex-wrap: wrap; gap: var(--spacing-md); align-items: center;">
-			<input type="hidden" name="s" value="<?php echo esc_attr( get_search_query() ); ?>">
-			
-			<div>
-				<label style="font-weight: 600; display: block; margin-bottom: var(--spacing-xs);">
-					<?php _e( 'Search in:', 'islamic-scholars' ); ?>
-				</label>
-				<div style="display: flex; flex-wrap: wrap; gap: var(--spacing-md);">
-					<?php
-				$post_types = array(
-					'post' => __( 'Posts & Translations', 'islamic-scholars' ),
-					'page' => __( 'Pages', 'islamic-scholars' ),
-					'scholar' => __( 'Scholars', 'islamic-scholars' ),
-				);					$selected_post_types = isset( $_GET['post_type'] ) ? (array) $_GET['post_type'] : array();
-					if ( empty( $selected_post_types ) ) {
-						$selected_post_types = array_keys( $post_types );
-					}
-
-					foreach ( $post_types as $post_type => $label ) :
-						?>
-						<label style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer;">
-							<input 
-								type="checkbox" 
-								name="post_type[]" 
-								value="<?php echo esc_attr( $post_type ); ?>"
-								<?php checked( in_array( $post_type, $selected_post_types ), true ); ?>
-							>
-							<span><?php echo esc_html( $label ); ?></span>
-						</label>
-					<?php endforeach; ?>
-				</div>
-			</div>
-
-			<button type="submit" class="button" style="margin-top: auto;">
-				<?php _e( 'Filter', 'islamic-scholars' ); ?>
-			</button>
-		</form>
-	</div>
 
 	<!-- Results -->
 	<?php
 	if ( have_posts() ) :
+		$found_posts = $GLOBALS['wp_query']->found_posts;
 		echo '<div style="margin-bottom: var(--spacing-lg); color: var(--color-text-light); font-size: var(--fs-sm);">';
 		printf(
-			__( 'Found %d result(s)', 'islamic-scholars' ),
-			$GLOBALS['wp_query']->found_posts
+			_n( 'Found %d result', 'Found %d results', $found_posts, 'islamic-scholars' ),
+			$found_posts
 		);
 		echo '</div>';
 
