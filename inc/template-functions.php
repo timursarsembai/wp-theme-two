@@ -1224,11 +1224,16 @@ function islamic_scholars_seo_meta() {
  * Output Open Graph meta tags
  */
 function islamic_scholars_output_og_tags( $data ) {
+	// Strip HTML tags from description
+	$description = wp_strip_all_tags( $data['description'] );
+	$description = html_entity_decode( $description, ENT_QUOTES, 'UTF-8' );
+	$description = preg_replace( '/\s+/', ' ', $description ); // Normalize whitespace
+	$description = trim( $description );
 	?>
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="<?php echo esc_attr( $data['type'] ); ?>">
 	<meta property="og:title" content="<?php echo esc_attr( $data['title'] ); ?>">
-	<meta property="og:description" content="<?php echo esc_attr( $data['description'] ); ?>">
+	<meta property="og:description" content="<?php echo esc_attr( $description ); ?>">
 	<meta property="og:url" content="<?php echo esc_url( $data['url'] ); ?>">
 	<meta property="og:site_name" content="<?php echo esc_attr( $data['site_name'] ); ?>">
 	<meta property="og:locale" content="<?php echo esc_attr( $data['locale'] ); ?>">
@@ -1245,7 +1250,7 @@ function islamic_scholars_output_og_tags( $data ) {
 	<!-- Twitter -->
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:title" content="<?php echo esc_attr( $data['title'] ); ?>">
-	<meta name="twitter:description" content="<?php echo esc_attr( $data['description'] ); ?>">
+	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>">>
 	<?php if ( ! empty( $data['image'] ) ) : ?>
 	<meta name="twitter:image" content="<?php echo esc_url( $data['image'] ); ?>">
 	<?php endif; ?>
