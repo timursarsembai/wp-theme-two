@@ -988,10 +988,17 @@ function islamic_scholars_seo_meta() {
 		$pairs = get_translation_pairs( $post_id );
 		
 		if ( $pair_num > 0 && ! empty( $pairs ) && isset( $pairs[ $pair_num - 1 ] ) ) {
-			// Sharing specific pair
+			// Sharing specific pair - use translation text
 			$pair = $pairs[ $pair_num - 1 ];
-			$pair_text = wp_strip_all_tags( $pair['translation'] );
-			$pair_text = wp_trim_words( $pair_text, 25, '...' );
+			$pair_text = $pair['translation'];
+			// Remove any HTML links first
+			$pair_text = preg_replace( '/<a[^>]*>.*?<\/a>/i', '', $pair_text );
+			$pair_text = wp_strip_all_tags( $pair_text );
+			$pair_text = html_entity_decode( $pair_text, ENT_QUOTES, 'UTF-8' );
+			$pair_text = preg_replace( '/\s+/', ' ', $pair_text );
+			$pair_text = trim( $pair_text );
+			// Limit to ~50 words for description
+			$pair_text = wp_trim_words( $pair_text, 50, '...' );
 			
 			$pair_label = __( 'Page', 'islamic-scholars' );
 			$title = sprintf( '%s #%d — %s', $pair_label, $pair_num, $title );
