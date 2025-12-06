@@ -38,6 +38,7 @@ return array(
             'Full name: %s' => array('Полное имя: %s'),
             'Kunyah: %s' => array('Кунья: %s'),
             '%d–%d AH' => array('%d–%d г.х.'),
+            '%d AH – present' => array('%d г.х. – наши дни'),
             '%d Century AH' => array('%d век хиджры'),
             
             // Admin - Scholar
@@ -71,7 +72,10 @@ return array(
             'Translation' => array('Перевод'),
             '+ Add New Pair' => array('+ Добавить новую пару'),
             'Scholar' => array('Учёный'),
+            'Scholars' => array('Учёные'),
             '-- Select Scholar --' => array('-- Выберите учёного --'),
+            'Select one or more scholars associated with this work.' => array('Выберите одного или нескольких учёных, связанных с этим трудом.'),
+            'No scholars found. Create scholars first.' => array('Учёные не найдены. Сначала создайте учёных.'),
             'Translator Name' => array('Имя переводчика'),
             'Source/Book' => array('Источник/Книга'),
             'Source URL' => array('URL источника'),
@@ -123,7 +127,9 @@ return array(
             'Original & Translation' => array('Оригинал и перевод'),
             'Translation Info' => array('Информация о переводе'),
             'Scholar:' => array('Учёный:'),
+            'Scholars:' => array('Учёные:'),
             'Source:' => array('Источник:'),
+            'Tags:' => array('Метки:'),
             'Translator:' => array('Переводчик:'),
             // comments.php - plural forms use singular as key, with 'plural' sub-key
             '%d comment' => array(
@@ -165,6 +171,15 @@ return array(
             'Loading...' => array('Загрузка...'),
             '← Previous' => array('← Назад'),
             'Next →' => array('Далее →'),
+            
+            // Table of Contents
+            'Table of Contents' => array('Оглавление'),
+            
+            // Pagination buttons
+            'First page' => array('Первая страница'),
+            'Previous page' => array('Предыдущая страница'),
+            'Next page' => array('Следующая страница'),
+            'Last page' => array('Последняя страница'),
             
             // Search modal
             'Search' => array('Поиск'),

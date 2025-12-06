@@ -26,10 +26,16 @@
 		<?php
 		$birth_year = intval( get_post_meta( get_the_ID(), 'birth_year', true ) );
 		$death_year = intval( get_post_meta( get_the_ID(), 'death_year', true ) );
-		if ( $birth_year && $death_year ) {
+		if ( $birth_year ) {
 			?>
 			<p style="color: var(--color-primary-dark); font-weight: 600; margin-bottom: var(--spacing-md);">
-				<?php printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year ); ?>
+				<?php 
+				if ( $death_year ) {
+					printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
+				} else {
+					printf( __( '%d AH – present', 'islamic-scholars' ), $birth_year );
+				}
+				?>
 			</p>
 			<?php
 		}

@@ -579,6 +579,7 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 		
 		// Quill toolbar options
 		const toolbarOptions = [
+			[{ 'header': [2, 3, 4, false] }],
 			['bold', 'italic', 'underline', 'strike'],
 			[{ 'list': 'ordered'}, { 'list': 'bullet' }],
 			['link'],
@@ -868,7 +869,16 @@ function islamic_scholars_translation_pairs_callback( $post ) {
 function islamic_scholars_translation_metadata_callback( $post ) {
 	wp_nonce_field( 'islamic_scholars_trans_meta_nonce', 'islamic_scholars_trans_meta_nonce' );
 	
-	$scholar_id = get_post_meta( $post->ID, 'scholar_id', true );
+	// Support both old single scholar_id and new multiple scholar_ids
+	$scholar_ids = get_post_meta( $post->ID, 'scholar_ids', true );
+	if ( ! is_array( $scholar_ids ) ) {
+		$scholar_ids = array();
+		// Migrate from old single scholar_id
+		$old_scholar_id = get_post_meta( $post->ID, 'scholar_id', true );
+		if ( $old_scholar_id ) {
+			$scholar_ids = array( intval( $old_scholar_id ) );
+		}
+	}
 	$source = get_post_meta( $post->ID, 'source', true );
 	$source_url = get_post_meta( $post->ID, 'source_url', true );
 
@@ -879,17 +889,46 @@ function islamic_scholars_translation_metadata_callback( $post ) {
 		'order' => 'ASC',
 	) );
 	?>
+	<style>
+		.scholars-checkboxes {
+			max-height: 200px;
+			overflow-y: auto;
+			border: 1px solid #ddd;
+			padding: 10px;
+			background: #fff;
+			border-radius: 4px;
+		}
+		.scholars-checkboxes label {
+			display: block;
+			padding: 5px 0;
+			cursor: pointer;
+		}
+		.scholars-checkboxes label:hover {
+			background-color: #f0f0f0;
+		}
+		.scholars-checkboxes input {
+			margin-right: 8px;
+		}
+	</style>
 	<div style="padding: 10px 0;">
 		<p>
-			<label for="scholar_id"><?php _e( 'Scholar', 'islamic-scholars' ); ?></label><br>
-			<select id="scholar_id" name="scholar_id" style="width: 100%; padding: 8px;">
-				<option value=""><?php _e( '-- Select Scholar --', 'islamic-scholars' ); ?></option>
-				<?php foreach ( $scholars as $scholar ) : ?>
-					<option value="<?php echo $scholar->ID; ?>" <?php selected( $scholar_id, $scholar->ID ); ?>>
-						<?php echo esc_html( $scholar->post_title ); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
+			<label><?php _e( 'Scholars', 'islamic-scholars' ); ?></label><br>
+			<span style="color: #666; font-size: 12px;"><?php _e( 'Select one or more scholars associated with this work.', 'islamic-scholars' ); ?></span>
+			<div class="scholars-checkboxes">
+				<?php if ( empty( $scholars ) ) : ?>
+					<p style="color: #666;"><?php _e( 'No scholars found. Create scholars first.', 'islamic-scholars' ); ?></p>
+				<?php else : ?>
+					<?php foreach ( $scholars as $scholar ) : ?>
+						<label>
+							<input type="checkbox" 
+								   name="scholar_ids[]" 
+								   value="<?php echo $scholar->ID; ?>" 
+								   <?php checked( in_array( $scholar->ID, $scholar_ids ) ); ?>>
+							<?php echo esc_html( $scholar->post_title ); ?>
+						</label>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
 		</p>
 
 		<p>
@@ -946,9 +985,14 @@ function islamic_scholars_save_translation_meta( $post_id ) {
 	if ( isset( $_POST['islamic_scholars_trans_meta_nonce'] ) &&
 		 wp_verify_nonce( $_POST['islamic_scholars_trans_meta_nonce'], 'islamic_scholars_trans_meta_nonce' ) ) {
 		
-		if ( isset( $_POST['scholar_id'] ) ) {
-			update_post_meta( $post_id, 'scholar_id', intval( $_POST['scholar_id'] ) );
-		}
+		// Save multiple scholars
+		$scholar_ids = isset( $_POST['scholar_ids'] ) ? array_map( 'intval', $_POST['scholar_ids'] ) : array();
+		update_post_meta( $post_id, 'scholar_ids', $scholar_ids );
+		
+		// Keep old scholar_id for backwards compatibility (first selected scholar)
+		$first_scholar = ! empty( $scholar_ids ) ? $scholar_ids[0] : '';
+		update_post_meta( $post_id, 'scholar_id', $first_scholar );
+		
 		if ( isset( $_POST['source'] ) ) {
 			update_post_meta( $post_id, 'source', sanitize_text_field( $_POST['source'] ) );
 		}

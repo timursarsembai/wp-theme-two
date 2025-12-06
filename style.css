@@ -491,14 +491,69 @@ body.menu-open {
   }
 }
 
+/* Table of Contents */
+.translation-toc {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.toc-title {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text);
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-item {
+  margin-bottom: var(--spacing-xs);
+}
+
+.toc-item.toc-level-2 {
+  padding-left: 0;
+}
+
+.toc-item.toc-level-3 {
+  padding-left: var(--spacing-lg);
+}
+
+.toc-item.toc-level-4 {
+  padding-left: calc(var(--spacing-lg) * 2);
+}
+
+.toc-link {
+  display: inline-block;
+  padding: var(--spacing-xs) 0;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.toc-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
 /* Pairs Pagination */
 .pairs-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: 2px;
   margin-top: var(--spacing-xl);
   padding: var(--spacing-md);
+}
+
+.pairs-pagination .pagination-info {
+  margin: 0 var(--spacing-sm);
 }
 
 /* Desktop pagination - hide on mobile */
@@ -525,10 +580,33 @@ body.menu-open {
     margin-top: var(--spacing-md);
     padding: var(--spacing-sm) var(--spacing-md);
     z-index: 10;
+    gap: 2px;
+  }
+  
+  .mobile-pagination .pagination-info {
+    margin: 0 var(--spacing-xs);
+    flex: 0 1 auto;
+    text-align: center;
+    font-size: var(--fs-xs);
+    line-height: 1.2;
+    max-width: 100px;
   }
   
   .mobile-pagination .pagination-btn {
-    height: auto;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .mobile-pagination .pagination-btn span {
+    font-size: 20px;
+    line-height: 1;
   }
   
   /* Mobile single pair view */
@@ -657,6 +735,7 @@ body.menu-open {
 .pagination-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--color-primary);
@@ -667,6 +746,17 @@ body.menu-open {
   font-size: var(--fs-sm);
   transition: background-color 0.2s ease;
   height: auto !important;
+  min-width: 40px;
+}
+
+.pagination-btn.pagination-first,
+.pagination-btn.pagination-last {
+  padding: var(--spacing-sm);
+}
+
+.pagination-btn span {
+  font-size: 1.1em;
+  line-height: 1;
 }
 
 .pagination-btn:hover:not(:disabled) {
@@ -686,6 +776,13 @@ body.menu-open {
 
 .hidden-pair {
   display: none !important;
+}
+
+/* Post Tags */
+.post-tags a:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-white);
 }
 
 /* Footnotes */

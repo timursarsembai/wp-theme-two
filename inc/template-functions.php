@@ -46,6 +46,25 @@ function the_translation_pairs( $post_id = null ) {
 	$of_label = __( 'of', 'islamic-scholars' );
 	$share_label = __( 'Share', 'islamic-scholars' );
 	$loading_label = __( 'Loading...', 'islamic-scholars' );
+	$toc_label = __( 'Table of Contents', 'islamic-scholars' );
+	
+	// Collect headings for TOC
+	$toc_items = array();
+	foreach ( $pairs as $index => $pair ) {
+		$translation_text = $pair['translation'] ?? '';
+		// Find all h2, h3, h4 headings
+		if ( preg_match_all( '/<h([2-4])[^>]*>(.*?)<\/h\1>/is', $translation_text, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $match ) {
+				$toc_items[] = array(
+					'level' => (int) $match[1],
+					'text' => wp_strip_all_tags( $match[2] ),
+					'pair' => $index + 1,
+					'page' => floor( $index / $pairs_per_page ) + 1,
+				);
+			}
+		}
+	}
+	$has_toc = ! empty( $toc_items );
 	?>
 	<div class="translation-pairs-container" 
 		 data-pairs-per-page="<?php echo $pairs_per_page; ?>" 
@@ -53,6 +72,26 @@ function the_translation_pairs( $post_id = null ) {
 		 data-post-id="<?php echo $post_id; ?>"
 		 data-api-url="<?php echo esc_url( rest_url( 'islamic-scholars/v1/pairs/' . $post_id ) ); ?>"
 		 data-mobile-preload="<?php echo $mobile_preload; ?>">
+		
+		<?php if ( $has_toc ) : ?>
+		<!-- Table of Contents -->
+		<nav class="translation-toc" aria-label="<?php echo esc_attr( $toc_label ); ?>">
+			<h3 class="toc-title"><?php echo esc_html( $toc_label ); ?></h3>
+			<ul class="toc-list">
+				<?php foreach ( $toc_items as $item ) : ?>
+				<li class="toc-item toc-level-<?php echo $item['level']; ?>">
+					<a href="#page-<?php echo $item['pair']; ?>" 
+					   class="toc-link" 
+					   data-pair="<?php echo $item['pair']; ?>" 
+					   data-page="<?php echo $item['page']; ?>">
+						<?php echo esc_html( $item['text'] ); ?>
+					</a>
+				</li>
+				<?php endforeach; ?>
+			</ul>
+		</nav>
+		<?php endif; ?>
+		
 		<div class="translation-pairs">
 			<?php foreach ( $pairs as $index => $pair ) : 
 				$has_footnote = ! empty( $pair['footnote_original'] ) || ! empty( $pair['footnote_translation'] );
@@ -69,7 +108,12 @@ function the_translation_pairs( $post_id = null ) {
 					<div class="translation-pair-content">
 						<div class="translation-pair-original" dir="rtl">
 							<div class="arabic-text">
-								<?php echo wp_kses_post( $pair['original'] ); ?>
+								<?php 
+								// Remove empty <p><br></p> tags from original
+								$original_text = $pair['original'];
+								$original_text = preg_replace( '/<p>\s*<br\s*\/?>\s*<\/p>/i', '', $original_text );
+								echo wp_kses_post( $original_text ); 
+								?>
 							</div>
 							<?php if ( ! empty( $pair['footnote_original'] ) ) : ?>
 								<div class="pair-footnote pair-footnote-original">
@@ -104,30 +148,40 @@ function the_translation_pairs( $post_id = null ) {
 		<!-- Desktop pagination (for pages of 20 pairs) -->
 		<?php if ( $has_pagination ) : ?>
 		<div class="pairs-pagination desktop-pagination">
-			<button type="button" class="pagination-btn pagination-prev" disabled>
-				<span aria-hidden="true">←</span>
-				<?php _e( 'Previous', 'islamic-scholars' ); ?>
+			<button type="button" class="pagination-btn pagination-first" disabled title="<?php esc_attr_e( 'First page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">«</span>
+			</button>
+			<button type="button" class="pagination-btn pagination-prev" disabled title="<?php esc_attr_e( 'Previous page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">‹</span>
 			</button>
 			<span class="pagination-info">
 				<?php printf( __( 'Page %1$s of %2$s', 'islamic-scholars' ), '<span class="current-page">1</span>', '<span class="total-pages">' . $total_pages . '</span>' ); ?>
 			</span>
-			<button type="button" class="pagination-btn pagination-next">
-				<?php _e( 'Next', 'islamic-scholars' ); ?>
-				<span aria-hidden="true">→</span>
+			<button type="button" class="pagination-btn pagination-next" title="<?php esc_attr_e( 'Next page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">›</span>
+			</button>
+			<button type="button" class="pagination-btn pagination-last" title="<?php esc_attr_e( 'Last page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">»</span>
 			</button>
 		</div>
 		<?php endif; ?>
 		
 		<!-- Mobile swipe pagination (one pair at a time) -->
 		<div class="pairs-pagination mobile-pagination">
-			<button type="button" class="pagination-btn mobile-prev" disabled>
-				<span aria-hidden="true">←</span>
+			<button type="button" class="pagination-btn mobile-first" disabled title="<?php esc_attr_e( 'First page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">«</span>
+			</button>
+			<button type="button" class="pagination-btn mobile-prev" disabled title="<?php esc_attr_e( 'Previous page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">‹</span>
 			</button>
 			<span class="pagination-info">
 				<?php echo $page_label; ?> <span class="current-mobile-pair">1</span> <?php echo $of_label; ?> <span class="total-mobile-pairs"><?php echo $total_pairs; ?></span>
 			</span>
-			<button type="button" class="pagination-btn mobile-next"<?php echo $total_pairs <= 1 ? ' disabled' : ''; ?>>
-				<span aria-hidden="true">→</span>
+			<button type="button" class="pagination-btn mobile-next"<?php echo $total_pairs <= 1 ? ' disabled' : ''; ?> title="<?php esc_attr_e( 'Next page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">›</span>
+			</button>
+			<button type="button" class="pagination-btn mobile-last"<?php echo $total_pairs <= 1 ? ' disabled' : ''; ?> title="<?php esc_attr_e( 'Last page', 'islamic-scholars' ); ?>">
+				<span aria-hidden="true">»</span>
 			</button>
 		</div>
 	</div>
@@ -158,13 +212,17 @@ function the_translation_pairs( $post_id = null ) {
 			});
 			
 			// Desktop pagination elements
+			const firstBtn = container.querySelector('.pagination-first');
 			const prevBtn = container.querySelector('.pagination-prev');
 			const nextBtn = container.querySelector('.pagination-next');
+			const lastBtn = container.querySelector('.pagination-last');
 			const currentPageEl = container.querySelector('.current-page');
 			
 			// Mobile pagination elements
+			const mobileFirstBtn = container.querySelector('.mobile-first');
 			const mobilePrevBtn = container.querySelector('.mobile-prev');
 			const mobileNextBtn = container.querySelector('.mobile-next');
+			const mobileLastBtn = container.querySelector('.mobile-last');
 			const currentMobilePairEl = container.querySelector('.current-mobile-pair');
 			
 			const copyLinkLabel = <?php echo json_encode( $copy_link_label ); ?>;
@@ -247,8 +305,10 @@ function the_translation_pairs( $post_id = null ) {
 				if (currentPageEl) {
 					currentPageEl.textContent = page;
 				}
+				if (firstBtn) firstBtn.disabled = page === 1;
 				if (prevBtn) prevBtn.disabled = page === 1;
 				if (nextBtn) nextBtn.disabled = page === totalPages;
+				if (lastBtn) lastBtn.disabled = page === totalPages;
 				
 				if (scroll) {
 					container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -349,8 +409,10 @@ function the_translation_pairs( $post_id = null ) {
 				if (currentMobilePairEl) {
 					currentMobilePairEl.textContent = pairNum;
 				}
+				if (mobileFirstBtn) mobileFirstBtn.disabled = pairNum === 1;
 				if (mobilePrevBtn) mobilePrevBtn.disabled = pairNum === 1;
 				if (mobileNextBtn) mobileNextBtn.disabled = pairNum === totalPairs;
+				if (mobileLastBtn) mobileLastBtn.disabled = pairNum === totalPairs;
 				
 				// Update URL hash
 				history.replaceState(null, '', '#page-' + pairNum);
@@ -403,6 +465,12 @@ function the_translation_pairs( $post_id = null ) {
 			
 			// Desktop pagination handlers
 			if (hasPagination && prevBtn && nextBtn) {
+				if (firstBtn) {
+					firstBtn.addEventListener('click', () => {
+						if (currentPage > 1) showPage(1);
+					});
+				}
+				
 				prevBtn.addEventListener('click', () => {
 					if (currentPage > 1) showPage(currentPage - 1);
 				});
@@ -410,10 +478,22 @@ function the_translation_pairs( $post_id = null ) {
 				nextBtn.addEventListener('click', () => {
 					if (currentPage < totalPages) showPage(currentPage + 1);
 				});
+				
+				if (lastBtn) {
+					lastBtn.addEventListener('click', () => {
+						if (currentPage < totalPages) showPage(totalPages);
+					});
+				}
 			}
 			
 			// Mobile pagination handlers
 			if (mobilePrevBtn && mobileNextBtn) {
+				if (mobileFirstBtn) {
+					mobileFirstBtn.addEventListener('click', () => {
+						if (currentMobilePair > 1 && !isAnimating) showMobilePair(1, false, 'right');
+					});
+				}
+				
 				mobilePrevBtn.addEventListener('click', () => {
 					if (currentMobilePair > 1 && !isAnimating) showMobilePair(currentMobilePair - 1, false, 'right');
 				});
@@ -421,6 +501,12 @@ function the_translation_pairs( $post_id = null ) {
 				mobileNextBtn.addEventListener('click', () => {
 					if (currentMobilePair < totalPairs && !isAnimating) showMobilePair(currentMobilePair + 1, false, 'left');
 				});
+				
+				if (mobileLastBtn) {
+					mobileLastBtn.addEventListener('click', () => {
+						if (currentMobilePair < totalPairs && !isAnimating) showMobilePair(totalPairs, false, 'left');
+					});
+				}
 			}
 			
 			// Swipe detection for mobile
@@ -679,6 +765,39 @@ function the_translation_pairs( $post_id = null ) {
 			
 			// Listen for hash changes
 			window.addEventListener('hashchange', handleHash);
+			
+			// Table of Contents navigation
+			document.querySelectorAll('.toc-link').forEach(link => {
+				link.addEventListener('click', async function(e) {
+					e.preventDefault();
+					const pairNum = parseInt(this.dataset.pair);
+					const targetPage = parseInt(this.dataset.page);
+					const hash = '#page-' + pairNum;
+					
+					history.pushState(null, '', hash);
+					
+					if (isMobile) {
+						await showMobilePair(pairNum, false);
+					} else {
+						// First switch to the correct page
+						if (hasPagination && targetPage !== currentPage) {
+							showPage(targetPage, false);
+						}
+					}
+					
+					// Scroll to the pair after a small delay
+					setTimeout(() => {
+						const targetPair = document.getElementById('pair-' + pairNum);
+						if (targetPair) {
+							targetPair.scrollIntoView({ behavior: 'smooth', block: 'start' });
+							targetPair.classList.add('pair-highlight');
+							setTimeout(() => {
+								targetPair.classList.remove('pair-highlight');
+							}, 2000);
+						}
+					}, 100);
+				});
+			});
 		})();
 		</script>
 	<?php
@@ -980,7 +1099,13 @@ function islamic_scholars_seo_meta() {
 		$published = get_the_date( 'c' );
 		$modified = get_the_modified_date( 'c' );
 		$author = get_the_author();
-		$scholar_id = get_post_meta( $post_id, 'scholar_id', true );
+		
+		// Get scholars - support both new array and old single ID
+		$scholar_ids = get_post_meta( $post_id, 'scholar_ids', true );
+		if ( ! is_array( $scholar_ids ) || empty( $scholar_ids ) ) {
+			$old_scholar_id = get_post_meta( $post_id, 'scholar_id', true );
+			$scholar_ids = $old_scholar_id ? array( intval( $old_scholar_id ) ) : array();
+		}
 		$source = get_post_meta( $post_id, 'source', true );
 		
 		// Check if sharing specific page (via ?page=N parameter)
@@ -1261,7 +1386,7 @@ function islamic_scholars_output_og_tags( $data ) {
 	<!-- Twitter -->
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:title" content="<?php echo esc_attr( $data['title'] ); ?>">
-	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>">>
+	<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>">
 	<?php if ( ! empty( $data['image'] ) ) : ?>
 	<meta name="twitter:image" content="<?php echo esc_url( $data['image'] ); ?>">
 	<?php endif; ?>

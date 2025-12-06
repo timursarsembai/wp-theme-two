@@ -314,20 +314,57 @@ add_action( 'pre_get_posts', 'islamic_scholars_modify_archive_query' );
 
 /**
  * Get century based on birth and death years
+ * For living scholars (no death year), estimate based on birth year
+ * For scholars spanning two centuries, assign to the century where they lived longer
  */
-function get_scholar_century( $birth_year, $death_year ) {
-	if ( ! $birth_year || ! $death_year ) {
+function get_scholar_century( $birth_year, $death_year = null ) {
+	if ( ! $birth_year ) {
 		return null;
 	}
 
 	$birth_century = ceil( $birth_year / 100 );
-	$death_century = ceil( $death_year / 100 );
-
-	// If spans multiple centuries, assign to death century
-	if ( $death_century > $birth_century ) {
-		return $death_century;
+	
+	// If death year is provided
+	if ( $death_year ) {
+		$death_century = ceil( $death_year / 100 );
+		
+		// If lived in same century
+		if ( $death_century == $birth_century ) {
+			return $birth_century;
+		}
+		
+		// If spans multiple centuries, calculate which century they lived longer in
+		// Century boundary (e.g., 1400 for 14th/15th century)
+		$century_boundary = $birth_century * 100;
+		
+		// Years lived in birth century (from birth to end of century)
+		$years_in_birth_century = $century_boundary - $birth_year;
+		
+		// Years lived in death century (from start of century to death)
+		$years_in_death_century = $death_year - $century_boundary;
+		
+		// Assign to century where they lived longer
+		if ( $years_in_birth_century >= $years_in_death_century ) {
+			return $birth_century;
+		} else {
+			return $death_century;
+		}
 	}
-
+	
+	// For living scholars (no death year):
+	// If born in last 30 years of a century (e.g., 1371+), likely to pass in next century
+	// Otherwise, assign to birth century
+	$year_in_century = $birth_year % 100;
+	if ( $year_in_century == 0 ) {
+		$year_in_century = 100; // Year 1400 is year 100 of 14th century
+	}
+	
+	// If born after year 70 of the century (e.g., 1371, 1472, etc.),
+	// they will likely pass in the next century
+	if ( $year_in_century > 70 ) {
+		return $birth_century + 1;
+	}
+	
 	return $birth_century;
 }
 
@@ -386,11 +423,12 @@ function islamic_scholars_auto_assign_century( $post_id ) {
 	$birth_year = (int) get_post_meta( $post_id, 'birth_year', true );
 	$death_year = (int) get_post_meta( $post_id, 'death_year', true );
 
-	if ( ! $birth_year || ! $death_year ) {
+	// Only birth year is required now
+	if ( ! $birth_year ) {
 		return;
 	}
 
-	$century = get_scholar_century( $birth_year, $death_year );
+	$century = get_scholar_century( $birth_year, $death_year ?: null );
 
 	if ( $century ) {
 		$century_name = sprintf( __( '%d Century AH', 'islamic-scholars' ), $century );

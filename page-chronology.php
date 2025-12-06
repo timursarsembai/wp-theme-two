@@ -87,13 +87,15 @@ get_header(); ?>
 												<?php echo esc_html( $scholar->post_title ); ?>
 											</a>
 										</h3>
-										<?php if ( $birth_year && $death_year ) : ?>
+										<?php if ( $birth_year ) : ?>
 											<p style="color: var(--color-text-light); font-size: var(--fs-sm);">
-												<?php printf(
-													__( '%d–%d AH', 'islamic-scholars' ),
-													$birth_year,
-													$death_year
-												); ?>
+												<?php 
+												if ( $death_year ) {
+													printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
+												} else {
+													printf( __( '%d AH – present', 'islamic-scholars' ), $birth_year );
+												}
+												?>
 											</p>
 										<?php endif; ?>
 										<p style="color: var(--color-text-light); font-size: var(--fs-sm); margin-top: var(--spacing-sm);">

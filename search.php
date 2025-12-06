@@ -47,18 +47,29 @@ get_header(); ?>
 
 					<?php
 					if ( $post_type === 'translation' ) {
-						$scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
-						if ( $scholar_id ) {
+						$scholar_ids = get_post_meta( get_the_ID(), 'scholar_ids', true );
+						if ( ! is_array( $scholar_ids ) || empty( $scholar_ids ) ) {
+							$old_scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
+							$scholar_ids = $old_scholar_id ? array( intval( $old_scholar_id ) ) : array();
+						}
+						if ( ! empty( $scholar_ids ) ) {
+							$scholar_names = array_map( function( $sid ) {
+								return esc_html( get_the_title( $sid ) );
+							}, $scholar_ids );
 							echo '<p style="color: var(--color-text-light); font-size: var(--fs-sm); margin-bottom: var(--spacing-md);">';
-							printf( __( 'By %s', 'islamic-scholars' ), '<strong>' . esc_html( get_the_title( $scholar_id ) ) . '</strong>' );
+							printf( __( 'By %s', 'islamic-scholars' ), '<strong>' . implode( ', ', $scholar_names ) . '</strong>' );
 							echo '</p>';
 						}
 					} elseif ( $post_type === 'scholar' ) {
 						$birth_year = intval( get_post_meta( get_the_ID(), 'birth_year', true ) );
 						$death_year = intval( get_post_meta( get_the_ID(), 'death_year', true ) );
-						if ( $birth_year && $death_year ) {
+						if ( $birth_year ) {
 							echo '<p style="color: var(--color-text-light); font-size: var(--fs-sm); margin-bottom: var(--spacing-md);">';
-							printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
+							if ( $death_year ) {
+								printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
+							} else {
+								printf( __( '%d AH – present', 'islamic-scholars' ), $birth_year );
+							}
 							echo '</p>';
 						}
 					}

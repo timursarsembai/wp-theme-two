@@ -41,16 +41,29 @@ get_header(); ?>
 
 			<!-- Translation metadata -->
 			<?php
-			$scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
+			// Get scholars - support both new array and old single ID
+			$scholar_ids = get_post_meta( get_the_ID(), 'scholar_ids', true );
+			if ( ! is_array( $scholar_ids ) || empty( $scholar_ids ) ) {
+				$old_scholar_id = get_post_meta( get_the_ID(), 'scholar_id', true );
+				$scholar_ids = $old_scholar_id ? array( intval( $old_scholar_id ) ) : array();
+			}
 			$source = get_post_meta( get_the_ID(), 'source', true );
 			$source_url = get_post_meta( get_the_ID(), 'source_url', true );
 			
-			if ( $scholar_id || $source ) :
+			if ( ! empty( $scholar_ids ) || $source ) :
 				?>
 				<div class="card" style="margin: var(--spacing-2xl) 0; padding: var(--spacing-lg); background-color: rgba(192, 132, 0, 0.05); border-left: 4px solid var(--color-accent);">
 					<h4><?php _e( 'Translation Info', 'islamic-scholars' ); ?></h4>
-					<?php if ( $scholar_id ) : ?>
-						<p><strong><?php _e( 'Scholar:', 'islamic-scholars' ); ?></strong> <a href="<?php echo esc_url( get_permalink( $scholar_id ) ); ?>"><?php echo esc_html( get_the_title( $scholar_id ) ); ?></a></p>
+					<?php if ( ! empty( $scholar_ids ) ) : ?>
+						<p><strong><?php echo count( $scholar_ids ) > 1 ? __( 'Scholars:', 'islamic-scholars' ) : __( 'Scholar:', 'islamic-scholars' ); ?></strong> 
+						<?php 
+						$scholar_links = array();
+						foreach ( $scholar_ids as $sid ) {
+							$scholar_links[] = '<a href="' . esc_url( get_permalink( $sid ) ) . '">' . esc_html( get_the_title( $sid ) ) . '</a>';
+						}
+						echo implode( ', ', $scholar_links );
+						?>
+						</p>
 					<?php endif; ?>
 					<?php if ( $source ) : ?>
 						<p><strong><?php _e( 'Source:', 'islamic-scholars' ); ?></strong> 
@@ -61,6 +74,24 @@ get_header(); ?>
 						<?php endif; ?>
 						</p>
 					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+
+			<?php
+			// Tags
+			$tags = get_the_tags();
+			if ( $tags ) :
+				?>
+				<div class="post-tags" style="margin: var(--spacing-xl) 0;">
+					<strong><?php _e( 'Tags:', 'islamic-scholars' ); ?></strong>
+					<div style="display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-top: var(--spacing-sm);">
+						<?php foreach ( $tags as $tag ) : ?>
+							<a href="<?php echo esc_url( get_tag_link( $tag->term_id ) ); ?>" 
+							   style="display: inline-block; padding: var(--spacing-xs) var(--spacing-sm); background-color: var(--color-bg-alt); border: 1px solid var(--color-border); border-radius: 4px; font-size: var(--fs-sm); color: var(--color-text); text-decoration: none; transition: all 0.2s ease;">
+								<?php echo esc_html( $tag->name ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
 				</div>
 			<?php endif; ?>
 

@@ -47,13 +47,15 @@ get_header(); ?>
 						</p>
 					<?php endif; ?>
 
-					<?php if ( $birth_year && $death_year ) : ?>
+					<?php if ( $birth_year ) : ?>
 						<p class="scholar-dates" style="font-size: var(--fs-lg); font-weight: 600; color: var(--color-primary-dark);">
-							<?php printf(
-								__( '%d–%d AH', 'islamic-scholars' ),
-								$birth_year,
-								$death_year
-							); ?>
+							<?php 
+							if ( $death_year ) {
+								printf( __( '%d–%d AH', 'islamic-scholars' ), $birth_year, $death_year );
+							} else {
+								printf( __( '%d AH – present', 'islamic-scholars' ), $birth_year );
+							}
+							?>
 						</p>
 					<?php endif; ?>
 
@@ -145,12 +147,30 @@ get_header(); ?>
 
 			<!-- Translations by this scholar -->
 			<?php
+			$current_scholar_id = get_the_ID();
+			
+			// Query posts where this scholar is in scholar_ids array OR old scholar_id field
+			// Serialized array looks like: a:2:{i:0;i:123;i:1;i:456;} where 123, 456 are IDs
 			$translations = get_posts( array(
 				'post_type' => 'post',
 				'meta_query' => array(
+					'relation' => 'OR',
+					// New: check if scholar ID is in serialized array (as integer: i:123;)
+					array(
+						'key' => 'scholar_ids',
+						'value' => 'i:' . $current_scholar_id . ';',
+						'compare' => 'LIKE',
+					),
+					// Also check string format (s:3:"123";)
+					array(
+						'key' => 'scholar_ids',
+						'value' => '"' . $current_scholar_id . '"',
+						'compare' => 'LIKE',
+					),
+					// Backwards compatibility: old single scholar_id
 					array(
 						'key' => 'scholar_id',
-						'value' => get_the_ID(),
+						'value' => $current_scholar_id,
 						'compare' => '=',
 					),
 				),
