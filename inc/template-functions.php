@@ -1225,9 +1225,13 @@ function islamic_scholars_seo_meta() {
  */
 function islamic_scholars_output_og_tags( $data ) {
 	// Strip HTML tags from description
-	$description = wp_strip_all_tags( $data['description'] );
+	$description = $data['description'];
+	// Remove "Read more" links completely (including link text)
+	$description = preg_replace( '/<a[^>]*>.*?<\/a>/i', '', $description );
+	$description = wp_strip_all_tags( $description );
 	$description = html_entity_decode( $description, ENT_QUOTES, 'UTF-8' );
 	$description = preg_replace( '/\s+/', ' ', $description ); // Normalize whitespace
+	$description = preg_replace( '/\.\.\.\s*$/', '...', $description ); // Clean up trailing dots
 	$description = trim( $description );
 	?>
 	<!-- Open Graph / Facebook -->
