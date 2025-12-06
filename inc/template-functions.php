@@ -1265,6 +1265,17 @@ function islamic_scholars_output_og_tags( $data ) {
  * Output Schema.org JSON-LD
  */
 function islamic_scholars_output_schema( $schema ) {
+	// Clean description if present
+	if ( isset( $schema['description'] ) ) {
+		$description = $schema['description'];
+		// Remove "Read more" links completely (including link text)
+		$description = preg_replace( '/<a[^>]*>.*?<\/a>/i', '', $description );
+		$description = wp_strip_all_tags( $description );
+		$description = html_entity_decode( $description, ENT_QUOTES, 'UTF-8' );
+		$description = preg_replace( '/\s+/', ' ', $description );
+		$description = preg_replace( '/\.\.\.\s*$/', '...', $description );
+		$schema['description'] = trim( $description );
+	}
 	?>
 	<script type="application/ld+json">
 	<?php echo wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ); ?>
