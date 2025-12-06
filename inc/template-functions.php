@@ -61,7 +61,7 @@ function the_translation_pairs( $post_id = null ) {
 			?>
 				<div class="translation-pair<?php echo $has_pagination && $page_num > 1 ? ' hidden-pair' : ''; ?>" id="pair-<?php echo $pair_number; ?>" data-pair-id="<?php echo $index; ?>" data-page="<?php echo $page_num; ?>">
 					<div class="pair-number-wrapper">
-						<a href="#pair-<?php echo $pair_number; ?>" class="pair-number" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">#<?php echo $pair_number; ?></a>
+						<a href="#page-<?php echo $pair_number; ?>" class="pair-number" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $copy_link_label ); ?>">#<?php echo $pair_number; ?></a>
 						<button type="button" class="pair-share-btn" data-pair="<?php echo $pair_number; ?>" title="<?php echo esc_attr( $share_label ); ?>">
 							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
 						</button>
@@ -353,7 +353,7 @@ function the_translation_pairs( $post_id = null ) {
 				if (mobileNextBtn) mobileNextBtn.disabled = pairNum === totalPairs;
 				
 				// Update URL hash
-				history.replaceState(null, '', '#pair-' + pairNum);
+				history.replaceState(null, '', '#page-' + pairNum);
 				
 				if (scroll) {
 					container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -382,9 +382,9 @@ function the_translation_pairs( $post_id = null ) {
 				const hash = window.location.hash;
 				let initialPair = 1;
 				
-				// Check if URL has pair hash
-				if (hash && hash.startsWith('#pair-')) {
-					const pairNum = parseInt(hash.replace('#pair-', ''));
+				// Check if URL has page hash
+				if (hash && hash.startsWith('#page-')) {
+					const pairNum = parseInt(hash.replace('#page-', ''));
 					if (pairNum >= 1 && pairNum <= totalPairs) {
 						initialPair = pairNum;
 						currentMobilePair = pairNum;
@@ -454,9 +454,9 @@ function the_translation_pairs( $post_id = null ) {
 				link.addEventListener('click', function(e) {
 					e.preventDefault();
 					const pairNum = parseInt(this.dataset.pair);
-					const hash = '#pair-' + pairNum;
-					// Use ?pair=N for social sharing (OG tags) + #pair-N for scrolling
-					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + hash;
+					const hash = '#page-' + pairNum;
+					// Use ?page=N for social sharing (OG tags) + #page-N for scrolling
+					const shareUrl = window.location.origin + window.location.pathname + '?page=' + pairNum + hash;
 					
 					// Update URL in browser (just hash for cleaner URL)
 					history.pushState(null, '', hash);
@@ -473,7 +473,7 @@ function the_translation_pairs( $post_id = null ) {
 						}
 					}
 					
-					// Copy share URL to clipboard (with ?pair= for OG tags)
+					// Copy share URL to clipboard (with ?page= for OG tags)
 					navigator.clipboard.writeText(shareUrl).then(() => {
 						this.classList.add('copied');
 						this.title = linkCopiedLabel;
@@ -494,7 +494,7 @@ function the_translation_pairs( $post_id = null ) {
 					e.stopPropagation();
 					
 					const pairNum = parseInt(this.dataset.pair);
-					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
+					const shareUrl = window.location.origin + window.location.pathname + '?page=' + pairNum + '#page-' + pairNum;
 					const pageTitle = document.title;
 					const shareTitle = '<?php echo esc_js( __( 'Page', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 					const btn = this;
@@ -582,8 +582,8 @@ function the_translation_pairs( $post_id = null ) {
 					pairLink.addEventListener('click', function(e) {
 						e.preventDefault();
 						const pairNum = parseInt(this.dataset.pair);
-						const hash = '#pair-' + pairNum;
-						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + hash;
+						const hash = '#page-' + pairNum;
+						const shareUrl = window.location.origin + window.location.pathname + '?page=' + pairNum + hash;
 						const link = this;
 						
 						history.pushState(null, '', hash);
@@ -607,7 +607,7 @@ function the_translation_pairs( $post_id = null ) {
 						e.stopPropagation();
 						
 						const pairNum = parseInt(this.dataset.pair);
-						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
+						const shareUrl = window.location.origin + window.location.pathname + '?page=' + pairNum + '#page-' + pairNum;
 						const pageTitle = document.title;
 						const shareTitle = '<?php echo esc_js( __( 'Page', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 						const btn = this;
@@ -630,8 +630,8 @@ function the_translation_pairs( $post_id = null ) {
 			// Handle hash on page load - navigate to correct page/pair
 			async function handleHash() {
 				const hash = window.location.hash;
-				if (hash && hash.startsWith('#pair-')) {
-					const pairNum = parseInt(hash.replace('#pair-', ''));
+				if (hash && hash.startsWith('#page-')) {
+					const pairNum = parseInt(hash.replace('#page-', ''));
 					if (pairNum >= 1 && pairNum <= totalPairs) {
 						if (isMobile) {
 							await showMobilePair(pairNum, false);
@@ -983,8 +983,8 @@ function islamic_scholars_seo_meta() {
 		$scholar_id = get_post_meta( $post_id, 'scholar_id', true );
 		$source = get_post_meta( $post_id, 'source', true );
 		
-		// Check if sharing specific pair (via ?pair=N parameter)
-		$pair_num = isset( $_GET['pair'] ) ? absint( $_GET['pair'] ) : 0;
+		// Check if sharing specific page (via ?page=N parameter)
+		$pair_num = isset( $_GET['page'] ) ? absint( $_GET['page'] ) : 0;
 		$pairs = get_translation_pairs( $post_id );
 		
 		if ( $pair_num > 0 && ! empty( $pairs ) && isset( $pairs[ $pair_num - 1 ] ) ) {
@@ -993,10 +993,10 @@ function islamic_scholars_seo_meta() {
 			$pair_text = wp_strip_all_tags( $pair['translation'] );
 			$pair_text = wp_trim_words( $pair_text, 25, '...' );
 			
-			$pair_label = __( 'Pair', 'islamic-scholars' );
+			$pair_label = __( 'Page', 'islamic-scholars' );
 			$title = sprintf( '%s #%d — %s', $pair_label, $pair_num, $title );
 			$description = $pair_text;
-			$url = get_permalink() . '?pair=' . $pair_num . '#pair-' . $pair_num;
+			$url = get_permalink() . '?page=' . $pair_num . '#page-' . $pair_num;
 		}
 		
 		// Open Graph
