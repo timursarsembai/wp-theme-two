@@ -496,7 +496,7 @@ function the_translation_pairs( $post_id = null ) {
 					const pairNum = parseInt(this.dataset.pair);
 					const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
 					const pageTitle = document.title;
-					const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+					const shareTitle = '<?php echo esc_js( __( 'Page', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 					const btn = this;
 					
 					// Try native share API first (only on HTTPS)
@@ -609,7 +609,7 @@ function the_translation_pairs( $post_id = null ) {
 						const pairNum = parseInt(this.dataset.pair);
 						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + '#pair-' + pairNum;
 						const pageTitle = document.title;
-						const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
+						const shareTitle = '<?php echo esc_js( __( 'Page', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 						const btn = this;
 						
 						if (isSecureContext && navigator.share) {
