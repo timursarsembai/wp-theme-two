@@ -486,6 +486,8 @@ function the_translation_pairs( $post_id = null ) {
 			});
 			
 			// Share button functionality (native share or copy)
+			const isSecureContext = window.isSecureContext || window.location.protocol === 'https:';
+			
 			container.querySelectorAll('.pair-share-btn').forEach(btn => {
 				btn.addEventListener('click', async function(e) {
 					e.preventDefault();
@@ -497,47 +499,34 @@ function the_translation_pairs( $post_id = null ) {
 					const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 					const btn = this;
 					
-					// Try native share API first (mobile)
-					if (navigator.share && navigator.canShare && navigator.canShare({ url: shareUrl })) {
+					// Try native share API first (only on HTTPS)
+					if (isSecureContext && navigator.share) {
 						try {
 							await navigator.share({
 								title: shareTitle,
 								url: shareUrl
 							});
+							return; // Success - exit
 						} catch (err) {
-							// User cancelled or error - fallback to copy
-							if (err.name !== 'AbortError') {
-								copyToClipboard(shareUrl, btn);
+							// User cancelled - don't show fallback
+							if (err.name === 'AbortError') {
+								return;
 							}
+							// Other error - fall through to copy
 						}
-					} else if (navigator.share) {
-						// Fallback for browsers without canShare
-						try {
-							await navigator.share({
-								title: shareTitle,
-								url: shareUrl
-							});
-						} catch (err) {
-							if (err.name !== 'AbortError') {
-								copyToClipboard(shareUrl, btn);
-							}
-						}
-					} else {
-						// No share API - copy to clipboard
-						copyToClipboard(shareUrl, btn);
 					}
+					
+					// Fallback: copy to clipboard
+					copyToClipboard(shareUrl, btn);
 				});
 			});
 			
 			function copyToClipboard(url, element) {
-				if (navigator.clipboard && navigator.clipboard.writeText) {
+				// On HTTP, clipboard API doesn't work - use fallback directly
+				if (isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
 					navigator.clipboard.writeText(url).then(() => {
-						element.classList.add('copied');
-						setTimeout(() => {
-							element.classList.remove('copied');
-						}, 2000);
+						showCopiedFeedback(element);
 					}).catch(() => {
-						// Fallback for clipboard API failure
 						fallbackCopyToClipboard(url, element);
 					});
 				} else {
@@ -545,8 +534,19 @@ function the_translation_pairs( $post_id = null ) {
 				}
 			}
 			
+			function showCopiedFeedback(element) {
+				element.classList.add('copied');
+				// Show tooltip or visual feedback
+				const originalTitle = element.title;
+				element.title = linkCopiedLabel;
+				setTimeout(() => {
+					element.classList.remove('copied');
+					element.title = originalTitle;
+				}, 2000);
+			}
+			
 			function fallbackCopyToClipboard(url, element) {
-				// Create temporary textarea for older browsers
+				// Create temporary textarea for older browsers / HTTP
 				const textArea = document.createElement('textarea');
 				textArea.value = url;
 				textArea.style.position = 'fixed';
@@ -555,16 +555,22 @@ function the_translation_pairs( $post_id = null ) {
 				document.body.appendChild(textArea);
 				textArea.focus();
 				textArea.select();
+				
+				let success = false;
 				try {
-					document.execCommand('copy');
-					element.classList.add('copied');
-					setTimeout(() => {
-						element.classList.remove('copied');
-					}, 2000);
+					success = document.execCommand('copy');
 				} catch (err) {
 					console.error('Copy failed:', err);
 				}
+				
 				document.body.removeChild(textArea);
+				
+				if (success) {
+					showCopiedFeedback(element);
+				} else {
+					// Last resort: show URL in alert for manual copy
+					alert('<?php echo esc_js( __( 'Copy this link:', 'islamic-scholars' ) ); ?>\n' + url);
+				}
 			}
 			
 			// Bind events to a single pair element (used for AJAX-loaded pairs)
@@ -578,6 +584,7 @@ function the_translation_pairs( $post_id = null ) {
 						const pairNum = parseInt(this.dataset.pair);
 						const hash = '#pair-' + pairNum;
 						const shareUrl = window.location.origin + window.location.pathname + '?pair=' + pairNum + hash;
+						const link = this;
 						
 						history.pushState(null, '', hash);
 						
@@ -590,14 +597,7 @@ function the_translation_pairs( $post_id = null ) {
 							}
 						}
 						
-						navigator.clipboard.writeText(shareUrl).then(() => {
-							this.classList.add('copied');
-							this.title = linkCopiedLabel;
-							setTimeout(() => {
-								this.classList.remove('copied');
-								this.title = copyLinkLabel;
-							}, 2000);
-						});
+						copyToClipboard(shareUrl, link);
 					});
 				}
 				
@@ -612,16 +612,17 @@ function the_translation_pairs( $post_id = null ) {
 						const shareTitle = '<?php echo esc_js( __( 'Pair', 'islamic-scholars' ) ); ?> #' + pairNum + ' — ' + pageTitle;
 						const btn = this;
 						
-						if (navigator.share) {
+						if (isSecureContext && navigator.share) {
 							try {
 								await navigator.share({ title: shareTitle, url: shareUrl });
+								return;
 							} catch (err) {
-								if (err.name !== 'AbortError') {
-									copyToClipboard(shareUrl, btn);
+								if (err.name === 'AbortError') {
+									return;
 								}
 							}
-						} else {
-							copyToClipboard(shareUrl, btn);
+						}
+						copyToClipboard(shareUrl, btn);
 						}
 					});
 				}

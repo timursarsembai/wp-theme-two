@@ -191,6 +191,7 @@ return array(
             // Pair anchors
             'Copy link' => array('Скопировать ссылку'),
             'Link copied!' => array('Ссылка скопирована!'),
+            'Copy this link:' => array('Скопируйте эту ссылку:'),
             
             // Footnotes
             'Footnotes' => array('Сноски'),
