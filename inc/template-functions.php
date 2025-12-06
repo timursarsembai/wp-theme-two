@@ -623,7 +623,6 @@ function the_translation_pairs( $post_id = null ) {
 							}
 						}
 						copyToClipboard(shareUrl, btn);
-						}
 					});
 				}
 			}
