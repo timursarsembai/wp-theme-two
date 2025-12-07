@@ -1206,6 +1206,7 @@ button:hover {
 
 .search-submit-btn {
   width: 100%;
+  height: auto;
   padding: 14px 24px;
   background: var(--color-primary-dark);
   color: var(--color-white);
